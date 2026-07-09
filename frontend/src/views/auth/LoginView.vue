@@ -5,7 +5,12 @@ import { useRouter } from "vue-router";
 import {
   EnvelopeIcon,
   LockClosedIcon,
+  TicketIcon,
+  ClockIcon,
+  UserGroupIcon,
+  ChartBarIcon,
 } from "@heroicons/vue/24/outline";
+import DemoLoginBot from "@/views/auth/DemoLoginBot.vue";
 
 const email = ref("");
 const password = ref("");
@@ -15,22 +20,14 @@ const loading = ref(false);
 const router = useRouter();
 const auth = useAuthStore();
 
-const isValid = computed(() => {
-  return email.value.includes("@") && password.value.length >= 6;
-});
+const isValid = computed(() => email.value.includes("@") && password.value.length >= 6);
 
 const submit = async () => {
   if (!isValid.value) return;
-
   try {
     loading.value = true;
     error.value = null;
-
-    await auth.login({
-      email: email.value,
-      password: password.value,
-    });
-
+    await auth.login({ email: email.value, password: password.value });
     router.push("/dashboard");
   } catch (err: any) {
     error.value = err?.response?.data?.message || "Credenciales inválidas";
@@ -38,97 +35,165 @@ const submit = async () => {
     loading.value = false;
   }
 };
+
+const handleAutofill = (payload: { email: string; password: string }) => {
+  email.value = payload.email;
+  password.value = payload.password;
+};
+
+const features = [
+  {
+    icon: TicketIcon,
+    title: "Tickets centralizados",
+    desc: "Todas las solicitudes en un solo flujo de trabajo.",
+  },
+  {
+    icon: ClockIcon,
+    title: "SLA en tiempo real",
+    desc: "Alertas automáticas antes de vencer un acuerdo de servicio.",
+  },
+  {
+    icon: UserGroupIcon,
+    title: "Colaboración por equipos",
+    desc: "Asigna, comenta y escala sin salir del ticket.",
+  },
+  {
+    icon: ChartBarIcon,
+    title: "Métricas accionables",
+    desc: "Visualiza carga, tiempos de respuesta y cuellos de botella.",
+  },
+];
 </script>
 
 <template>
-  <div class="min-h-screen flex items-center justify-center px-6 py-8 bg-linear-to-br from-slate-900 via-blue-900 to-indigo-900">
-    <div class="w-full max-w-md bg-white shadow-2xl rounded-2xl p-8">
+  <div class="min-h-screen flex bg-slate-950">
+    <!-- PANEL IZQUIERDO — Branding / valor del producto -->
+    <div
+      class="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-linear-to-br from-slate-900 via-indigo-950 to-slate-900 p-12 xl:p-16 flex-col justify-between"
+    >
+      <!-- Glow decorativo -->
+      <div class="absolute -top-24 -left-24 w-96 h-96 bg-indigo-600/20 rounded-full blur-3xl" aria-hidden="true" />
+      <div class="absolute bottom-0 right-0 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl" aria-hidden="true" />
 
-      <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">
-        Iniciar Sesión
-      </h1>
+      <div class="relative z-10">
+        <div class="flex items-center gap-2.5 mb-16">
+          <div class="w-9 h-9 rounded-lg bg-indigo-500 flex items-center justify-center">
+            <TicketIcon class="w-5 h-5 text-white" />
+          </div>
+          <span class="text-white font-semibold text-lg tracking-tight">TicketFlow</span>
+        </div>
 
-      <!-- ERROR -->
-      <div
-        v-if="error"
-        class="mb-4 bg-red-100 text-red-600 text-sm p-3 rounded-lg border border-red-200"
-      >
-        {{ error }}
+        <h2 class="text-3xl xl:text-4xl font-bold text-white leading-tight mb-4">
+          Gestiona soporte<br />sin perder el control
+        </h2>
+        <p class="text-slate-400 text-base mb-12 max-w-md">
+          La plataforma para equipos que necesitan resolver tickets rápido, con trazabilidad completa y cero fricción operativa.
+        </p>
+
+        <div class="space-y-6">
+          <div v-for="f in features" :key="f.title" class="flex items-start gap-3.5">
+            <div class="shrink-0 w-9 h-9 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center">
+              <component :is="f.icon" class="w-4.5 h-4.5 text-indigo-300" />
+            </div>
+            <div>
+              <p class="text-white text-sm font-medium">{{ f.title }}</p>
+              <p class="text-slate-400 text-sm">{{ f.desc }}</p>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <form @submit.prevent="submit" class="space-y-4">
+      <p class="relative z-10 text-slate-500 text-xs">
+        © {{ new Date().getFullYear() }} TicketFlow. Todos los derechos reservados.
+      </p>
+    </div>
 
-        <!-- EMAIL -->
-        <div class="relative">
-          <EnvelopeIcon class="w-5 h-5 absolute left-3 top-3.5 text-gray-400" />
-          <input
-            v-model="email"
-            type="email"
-            placeholder="Correo electrónico"
-            class="w-full pl-10 pr-4 py-2 border rounded-lg 
-                   focus:ring-2 focus:ring-blue-500 outline-none
-                   transition"
-          />
+    <!-- PANEL DERECHO — Formulario -->
+    <div class="flex-1 flex items-center justify-center px-4 sm:px-6 py-10">
+      <div class="w-full max-w-sm">
+        <!-- Logo visible solo en mobile (panel izq. oculto) -->
+        <div class="flex lg:hidden items-center justify-center gap-2.5 mb-8">
+          <div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center">
+            <TicketIcon class="w-4.5 h-4.5 text-white" />
+          </div>
+          <span class="text-white font-semibold text-base">TicketFlow</span>
         </div>
 
-        <!-- PASSWORD -->
-        <div class="relative">
-          <LockClosedIcon class="w-5 h-5 absolute left-3 top-3.5 text-gray-400" />
-          <input
-            v-model="password"
-            type="password"
-            placeholder="Contraseña"
-            class="w-full pl-10 pr-4 py-2 border rounded-lg 
-                   focus:ring-2 focus:ring-blue-500 outline-none
-                   transition"
-          />
+        <div class="mb-8">
+          <h1 class="text-2xl font-bold text-white mb-1.5">Bienvenido de nuevo</h1>
+          <p class="text-slate-400 text-sm">Ingresa tus credenciales para acceder al panel de tickets.</p>
         </div>
 
-        <!-- BUTTON -->
-        <button
-          :disabled="!isValid || loading"
-          class="w-full bg-blue-600 text-white py-2 rounded-lg 
-                 hover:bg-blue-700 disabled:opacity-50
-                 flex items-center justify-center gap-2 transition"
+        <div
+          v-if="error"
+          role="alert"
+          aria-live="assertive"
+          class="mb-4 bg-red-500/10 text-red-400 text-sm p-3 rounded-lg border border-red-500/20"
         >
-          <svg
-            v-if="loading"
-            class="animate-spin h-5 w-5"
-            viewBox="0 0 24 24"
+          {{ error }}
+        </div>
+
+        <form @submit.prevent="submit" class="space-y-4" novalidate>
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1.5">Correo electrónico</label>
+            <div class="relative">
+              <EnvelopeIcon class="w-5 h-5 absolute left-3 top-2.5 text-slate-500" />
+              <input
+                v-model="email"
+                type="email"
+                autocomplete="email"
+                placeholder="tu@empresa.com"
+                class="w-full pl-10 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white text-sm
+                       placeholder:text-slate-500 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500
+                       outline-none transition"
+              />
+            </div>
+          </div>
+
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <label class="block text-xs font-medium text-slate-300">Contraseña</label>
+              <RouterLink to="/forgot-password" class="text-xs text-indigo-400 hover:text-indigo-300 transition">
+                ¿Olvidaste tu contraseña?
+              </RouterLink>
+            </div>
+            <div class="relative">
+              <LockClosedIcon class="w-5 h-5 absolute left-3 top-2.5 text-slate-500" />
+              <input
+                v-model="password"
+                type="password"
+                autocomplete="current-password"
+                placeholder="••••••••"
+                class="w-full pl-10 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white text-sm
+                       placeholder:text-slate-500 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500
+                       outline-none transition"
+              />
+            </div>
+          </div>
+
+          <button
+            :disabled="!isValid || loading"
+            class="w-full bg-indigo-600 text-white py-2.5 rounded-lg font-medium text-sm
+                   hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed
+                   flex items-center justify-center gap-2 transition"
           >
-            <circle
-              class="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="white"
-              stroke-width="4"
-              fill="none"
-            />
-            <path
-              class="opacity-75"
-              fill="white"
-              d="M4 12a8 8 0 018-8v8z"
-            />
-          </svg>
+            <svg v-if="loading" class="animate-spin h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="12" cy="12" r="10" stroke="white" stroke-width="4" fill="none" class="opacity-25" />
+              <path fill="white" d="M4 12a8 8 0 018-8v8z" class="opacity-75" />
+            </svg>
+            {{ loading ? "Entrando..." : "Entrar" }}
+          </button>
+        </form>
 
-          {{ loading ? "Entrando..." : "Entrar" }}
-        </button>
-      </form>
-
-      <div class="mt-6 text-center text-sm text-gray-600 space-y-2">
-        <RouterLink to="/forgot-password" class="text-blue-600 hover:underline">
-          ¿Olvidaste tu contraseña?
-        </RouterLink>
-
-        <p>
+        <p class="mt-6 text-center text-sm text-slate-400">
           ¿No tienes cuenta?
-          <RouterLink to="/register" class="text-blue-600 hover:underline">
+          <RouterLink to="/register" class="text-indigo-400 hover:text-indigo-300 font-medium transition">
             Regístrate
           </RouterLink>
         </p>
       </div>
-
     </div>
+
+    <DemoLoginBot @autofill="handleAutofill" />
   </div>
 </template>

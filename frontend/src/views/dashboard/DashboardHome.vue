@@ -5,6 +5,13 @@ import { userApi } from "@/api/endpoints/user.api";
 import { roleApi } from "@/api/endpoints/role.api";
 import { permissionApi } from "@/api/endpoints/permission.api";
 import { requestApi } from "@/api/endpoints/request.api";
+import {
+  UsersIcon,
+  ShieldCheckIcon,
+  KeyIcon,
+  ClipboardDocumentListIcon,
+  InboxIcon,
+} from "@heroicons/vue/24/outline";
 
 const authStore = useAuthStore();
 
@@ -163,46 +170,49 @@ onMounted(loadStats);
       <!-- STATS CARDS -->
       <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-6">
 
-        <div
-          v-if="isAdmin"
-          class="bg-white rounded-2xl shadow-sm p-5 border border-gray-100"
-        >
-          <p class="text-xs text-gray-400 font-medium">Total Usuarios</p>
-          <p class="text-2xl md:text-3xl font-bold text-gray-800 mt-1">
-            {{ stats.users }}
-          </p>
+        <div v-if="isAdmin" class="bg-white rounded-2xl shadow-sm p-5 border border-gray-100 flex items-start justify-between">
+          <div>
+            <p class="text-xs text-gray-400 font-medium">Total Usuarios</p>
+            <p class="text-2xl md:text-3xl font-bold text-gray-800 mt-1">{{ stats.users }}</p>
+          </div>
+          <div class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+            <UsersIcon class="w-5 h-5" />
+          </div>
         </div>
 
-        <div
-          v-if="isAdmin"
-          class="bg-white rounded-2xl shadow-sm p-5 border border-gray-100"
-        >
-          <p class="text-xs text-gray-400 font-medium">Total Roles</p>
-          <p class="text-2xl md:text-3xl font-bold text-gray-800 mt-1">
-            {{ stats.roles }}
-          </p>
+        <div v-if="isAdmin" class="bg-white rounded-2xl shadow-sm p-5 border border-gray-100 flex items-start justify-between">
+          <div>
+            <p class="text-xs text-gray-400 font-medium">Total Roles</p>
+            <p class="text-2xl md:text-3xl font-bold text-gray-800 mt-1">{{ stats.roles }}</p>
+          </div>
+          <div class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+            <ShieldCheckIcon class="w-5 h-5" />
+          </div>
         </div>
 
-        <div
-          v-if="isAdmin"
-          class="bg-white rounded-2xl shadow-sm p-5 border border-gray-100"
-        >
-          <p class="text-xs text-gray-400 font-medium">Total Permisos</p>
-          <p class="text-2xl md:text-3xl font-bold text-gray-800 mt-1">
-            {{ stats.permissions }}
-          </p>
+        <div v-if="isAdmin" class="bg-white rounded-2xl shadow-sm p-5 border border-gray-100 flex items-start justify-between">
+          <div>
+            <p class="text-xs text-gray-400 font-medium">Total Permisos</p>
+            <p class="text-2xl md:text-3xl font-bold text-gray-800 mt-1">{{ stats.permissions }}</p>
+          </div>
+          <div class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+            <KeyIcon class="w-5 h-5" />
+          </div>
         </div>
 
-        <div class="bg-white rounded-2xl shadow-sm p-5 border border-gray-100">
-          <p class="text-xs text-gray-400 font-medium">
-            {{ isAdmin ? "Total Solicitudes" : "Mis Solicitudes" }}
-          </p>
-          <p class="text-2xl md:text-3xl font-bold text-gray-800 mt-1">
-            {{ stats.requests.total }}
-          </p>
-          <p class="text-xs text-gray-400 mt-1">
-            {{ stats.requests.open }} abiertas · {{ stats.requests.in_progress }} en progreso
-          </p>
+        <div class="bg-white rounded-2xl shadow-sm p-5 border border-gray-100 flex items-start justify-between">
+          <div class="min-w-0">
+            <p class="text-xs text-gray-400 font-medium">
+              {{ isAdmin ? "Total Solicitudes" : "Mis Solicitudes" }}
+            </p>
+            <p class="text-2xl md:text-3xl font-bold text-gray-800 mt-1">{{ stats.requests.total }}</p>
+            <p class="text-xs text-gray-400 mt-1">
+              {{ stats.requests.open }} abiertas · {{ stats.requests.in_progress }} en progreso
+            </p>
+          </div>
+          <div class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+            <ClipboardDocumentListIcon class="w-5 h-5" />
+          </div>
         </div>
 
       </div>
@@ -276,7 +286,8 @@ onMounted(loadStats);
           Solicitudes Recientes
         </h2>
 
-        <div v-if="recentRequests.length === 0" class="text-gray-400 text-center py-10">
+        <div v-if="recentRequests.length === 0" class="flex flex-col items-center text-gray-400 text-center py-10 gap-2">
+          <InboxIcon class="w-8 h-8 text-gray-300" />
           No hay solicitudes registradas
         </div>
 
@@ -324,7 +335,7 @@ onMounted(loadStats);
 
         <router-link
           to="/dashboard/requests"
-          class="block text-center text-sm md:text-base text-blue-600 hover:text-blue-700 font-medium"
+          class="block text-center text-sm md:text-base text-indigo-600 hover:text-indigo-700 font-medium"
         >
           Ver todas las solicitudes →
         </router-link>

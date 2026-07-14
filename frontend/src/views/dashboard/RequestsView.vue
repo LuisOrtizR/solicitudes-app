@@ -3,6 +3,13 @@ import { ref, computed, onMounted } from "vue";
 import { requestApi } from "@/api/endpoints/request.api";
 import type { Request, RequestStatus, RequestPriority } from "@/types/request.types";
 import { useAuthStore } from "@/stores/auth.store";
+import {
+  ExclamationTriangleIcon,
+  InboxIcon,
+  TrashIcon,
+  ClipboardDocumentListIcon,
+  CheckCircleIcon,
+} from "@heroicons/vue/24/outline";
 
 const authStore = useAuthStore();
 const requests = ref<Request[]>([]);
@@ -169,7 +176,7 @@ onMounted(fetchRequests);
         </div>
         <button
           @click="showCreateModal = true"
-          class="bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700 text-sm font-medium transition-colors"
+          class="bg-indigo-600 text-white px-4 py-2 rounded-xl hover:bg-indigo-700 text-sm font-medium transition-colors"
         >
           + Nueva
         </button>
@@ -177,7 +184,7 @@ onMounted(fetchRequests);
     </div>
 
     <div v-if="error" class="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">
-      ⚠️ {{ error }}
+      <ExclamationTriangleIcon class="w-5 h-5 shrink-0" /> {{ error }}
     </div>
 
     <div v-if="loading" class="flex items-center justify-center py-12 gap-3 text-gray-400">
@@ -229,7 +236,7 @@ onMounted(fetchRequests);
                 </td>
                 <td class="px-4 py-3 text-xs text-gray-500">
                   {{ r.email }}
-                  <span v-if="isOwner(r)" class="ml-1 bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded text-xs">Tú</span>
+                  <span v-if="isOwner(r)" class="ml-1 bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded text-xs">Tú</span>
                 </td>
                 <td class="px-4 py-3 text-xs text-gray-400">
                   {{ new Date(r.created_at).toLocaleDateString("es-ES") }}
@@ -242,7 +249,7 @@ onMounted(fetchRequests);
                     <button
                       v-if="canEdit(r)"
                       @click="openEditModal(r)"
-                      class="bg-blue-600 text-white px-3 py-1 rounded-lg text-xs hover:bg-blue-700"
+                      class="bg-indigo-600 text-white px-3 py-1 rounded-lg text-xs hover:bg-indigo-700"
                     >
                       Editar
                     </button>
@@ -258,7 +265,8 @@ onMounted(fetchRequests);
               </tr>
               <tr v-if="requests.length === 0">
                 <td colspan="6" class="px-4 py-12 text-center text-gray-400">
-                  📭 No hay solicitudes registradas.
+                  <InboxIcon class="w-8 h-8 mx-auto mb-2 text-gray-300" />
+                  No hay solicitudes registradas.
                 </td>
               </tr>
             </tbody>
@@ -287,7 +295,7 @@ onMounted(fetchRequests);
         </div>
         <div class="flex gap-2">
           <button @click="openDetail(r)" class="flex-1 bg-gray-600 text-white py-2 rounded-xl text-sm">Ver</button>
-          <button v-if="canEdit(r)" @click="openEditModal(r)" class="flex-1 bg-blue-600 text-white py-2 rounded-xl text-sm">Editar</button>
+          <button v-if="canEdit(r)" @click="openEditModal(r)" class="flex-1 bg-indigo-600 text-white py-2 rounded-xl text-sm">Editar</button>
           <button v-if="canDelete(r)" @click="openDeleteModal(r)" class="flex-1 border border-red-200 text-red-500 py-2 rounded-xl text-sm">Eliminar</button>
         </div>
       </div>
@@ -305,7 +313,7 @@ onMounted(fetchRequests);
           <option value="urgent">Urgente</option>
         </select>
         <div class="flex gap-3">
-          <button @click="createRequest" class="flex-1 bg-blue-600 text-white py-2.5 rounded-xl hover:bg-blue-700">Crear</button>
+          <button @click="createRequest" class="flex-1 bg-indigo-600 text-white py-2.5 rounded-xl hover:bg-indigo-700">Crear</button>
           <button @click="showCreateModal = false" class="flex-1 bg-gray-100 text-gray-700 py-2.5 rounded-xl hover:bg-gray-200">Cancelar</button>
         </div>
       </div>
@@ -318,7 +326,7 @@ onMounted(fetchRequests);
         <input v-model="editForm.title" class="w-full px-3 py-2 border border-gray-200 rounded-xl mb-3" placeholder="Título"/>
         <textarea v-model="editForm.description" rows="4" class="w-full px-3 py-2 border border-gray-200 rounded-xl mb-4" placeholder="Descripción"/>
         <div class="flex gap-3">
-          <button @click="updateRequest" class="flex-1 bg-blue-600 text-white py-2.5 rounded-xl hover:bg-blue-700">Guardar</button>
+          <button @click="updateRequest" class="flex-1 bg-indigo-600 text-white py-2.5 rounded-xl hover:bg-indigo-700">Guardar</button>
           <button @click="showEditModal = false" class="flex-1 bg-gray-100 text-gray-700 py-2.5 rounded-xl hover:bg-gray-200">Cancelar</button>
         </div>
       </div>
@@ -327,8 +335,8 @@ onMounted(fetchRequests);
     <div v-if="showDeleteModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4" @click="showDeleteModal = false">
       <div class="bg-white rounded-3xl w-full max-w-md shadow-2xl p-6" @click.stop>
         <div class="flex items-center gap-3 mb-4">
-          <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center text-red-600 text-lg">
-            🗑️
+          <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center text-red-600">
+            <TrashIcon class="w-5 h-5" />
           </div>
           <div>
             <h2 class="text-lg font-bold text-gray-900">Eliminar Solicitud</h2>
@@ -345,7 +353,9 @@ onMounted(fetchRequests);
           class="w-full px-3 py-2 border rounded-xl text-sm resize-none mb-2"
           :class="deleteError ? 'border-red-300' : 'border-gray-200'"
         />
-        <p v-if="deleteError" class="text-red-500 text-xs mb-3">⚠️ {{ deleteError }}</p>
+        <p v-if="deleteError" class="text-red-500 text-xs mb-3 flex items-center gap-1">
+          <ExclamationTriangleIcon class="w-3.5 h-3.5 shrink-0" /> {{ deleteError }}
+        </p>
         <div class="flex gap-3 mt-2">
           <button
             @click="confirmDelete"
@@ -388,13 +398,17 @@ onMounted(fetchRequests);
             <p>{{ detailRequest?.email }}</p>
           </div>
           <div v-if="detailRequest?.resolution" class="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
-            <p class="text-emerald-800 font-semibold text-sm mb-1">✅ Resolución</p>
+            <p class="text-emerald-800 font-semibold text-sm mb-1 flex items-center gap-1.5">
+              <CheckCircleIcon class="w-4 h-4" /> Resolución
+            </p>
             <p class="text-emerald-700 text-sm">{{ detailRequest?.resolution }}</p>
           </div>
         </div>
 
         <div class="mt-6">
-          <h3 class="text-sm font-semibold text-gray-700 mb-3">📋 Historial de cambios</h3>
+          <h3 class="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-1.5">
+            <ClipboardDocumentListIcon class="w-4 h-4" /> Historial de cambios
+          </h3>
           <div v-if="loadingHistory" class="text-center text-gray-400 text-xs py-4">Cargando historial...</div>
           <div v-else-if="historyList.length === 0" class="text-center text-gray-400 text-xs py-4">
             Sin cambios registrados aún.

@@ -3,6 +3,12 @@ import { ref, computed, onMounted } from "vue";
 import { requestApi } from "@/api/endpoints/request.api";
 import { useAuthStore } from "@/stores/auth.store";
 import type { Request } from "@/types/request.types";
+import {
+  ExclamationTriangleIcon,
+  CheckCircleIcon,
+  TrashIcon,
+  ClipboardDocumentListIcon,
+} from "@heroicons/vue/24/outline";
 
 const authStore = useAuthStore();
 const requests = ref<Request[]>([]);
@@ -89,7 +95,7 @@ onMounted(fetchDeleted);
     </div>
 
     <div v-if="error" class="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">
-      ⚠️ {{ error }}
+<ExclamationTriangleIcon class="w-5 h-5 shrink-0" /> {{ error }}
     </div>
 
     <div v-if="loading" class="flex items-center justify-center py-12 gap-3 text-gray-400">
@@ -151,7 +157,7 @@ onMounted(fetchDeleted);
                   <div class="flex justify-end opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
                       @click="openDetail(r)"
-                      class="bg-gray-600 text-white px-3 py-1 rounded-lg text-xs hover:bg-gray-700"
+                      class="bg-indigo-600 text-white px-3 py-1 rounded-lg text-xs hover:bg-indigo-700"
                     >
                       Ver historial
                     </button>
@@ -160,7 +166,8 @@ onMounted(fetchDeleted);
               </tr>
               <tr v-if="requests.length === 0">
                 <td colspan="7" class="px-4 py-12 text-center text-gray-400">
-                  ✅ No hay solicitudes pendientes de purga.
+                  <CheckCircleIcon class="w-8 h-8 mx-auto mb-2 text-emerald-300" />
+                  No hay solicitudes pendientes de purga.
                 </td>
               </tr>
             </tbody>
@@ -202,7 +209,7 @@ onMounted(fetchDeleted);
         </p>
         <button
           @click="openDetail(r)"
-          class="w-full bg-gray-600 text-white py-2 rounded-xl text-sm hover:bg-gray-700"
+          class="w-full bg-indigo-600 text-white py-2 rounded-xl text-sm hover:bg-indigo-700"
         >
           Ver historial
         </button>
@@ -219,8 +226,8 @@ onMounted(fetchDeleted);
         @click.stop
       >
         <div class="flex items-center gap-3 mb-5">
-          <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center text-red-600 text-lg shrink-0">
-            🗑️
+          <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center text-red-600 shrink-0">
+            <TrashIcon class="w-5 h-5" />
           </div>
           <div class="min-w-0">
             <h2 class="text-lg font-bold text-gray-900 leading-tight">Detalle de Solicitud Eliminada</h2>
@@ -259,11 +266,15 @@ onMounted(fetchDeleted);
             <p class="text-gray-700">{{ detailRequest?.email }}</p>
           </div>
           <div v-if="detailRequest?.resolution" class="bg-emerald-50 border border-emerald-200 rounded-xl p-3">
-            <p class="text-emerald-800 font-semibold text-xs mb-1">✅ Resolución</p>
+            <p class="text-emerald-800 font-semibold text-xs mb-1 flex items-center gap-1.5">
+              <CheckCircleIcon class="w-3.5 h-3.5" /> Resolución
+            </p>
             <p class="text-emerald-700 text-sm">{{ detailRequest.resolution }}</p>
           </div>
           <div class="bg-red-50 border border-red-200 rounded-xl p-3">
-            <p class="text-red-800 font-semibold text-xs mb-1">🗑️ Motivo de eliminación</p>
+            <p class="text-red-800 font-semibold text-xs mb-1 flex items-center gap-1.5">
+              <TrashIcon class="w-3.5 h-3.5" /> Motivo de eliminación
+            </p>
             <p class="text-red-700 text-sm">{{ detailRequest?.deleted_reason || '—' }}</p>
             <p class="text-red-400 text-xs mt-1">
               Eliminada el {{ detailRequest?.deleted_at ? new Date(detailRequest.deleted_at).toLocaleString('es-ES') : '—' }}
@@ -273,7 +284,9 @@ onMounted(fetchDeleted);
         </div>
 
         <div class="mt-6">
-          <h3 class="text-sm font-semibold text-gray-700 mb-3">📋 Historial de cambios</h3>
+          <h3 class="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-1.5">
+          <ClipboardDocumentListIcon class="w-4 h-4" /> Historial de cambios
+        </h3>
           <div v-if="loadingHistory" class="text-center text-gray-400 text-xs py-4">
             Cargando historial...
           </div>

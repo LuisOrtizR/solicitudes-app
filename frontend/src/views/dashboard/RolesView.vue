@@ -2,6 +2,7 @@
 import { ref, onMounted, computed } from "vue";
 import { roleApi, type Role } from "@/api/endpoints/role.api";
 import { permissionApi, type Permission } from "@/api/endpoints/permission.api";
+import { ExclamationTriangleIcon, ShieldCheckIcon } from "@heroicons/vue/24/outline";
 
 const roles         = ref<Role[]>([]);
 const permissions   = ref<Permission[]>([]);
@@ -169,17 +170,17 @@ onMounted(() => {
         <input
           v-model="form.name"
           placeholder="Nombre del rol"
-          class="px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none"
+          class="px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-400 focus:border-transparent outline-none"
         />
         <input
           v-model="form.description"
           placeholder="Descripción (opcional)"
-          class="px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none"
+          class="px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-400 focus:border-transparent outline-none"
         />
         <button
           @click="createRole"
           :disabled="!form.name || actionLoading"
-          class="bg-blue-600 text-white rounded-xl px-4 py-2.5 text-sm font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+          class="bg-indigo-600 text-white rounded-xl px-4 py-2.5 text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
         >
           <svg v-if="actionLoading" class="animate-spin h-4 w-4" viewBox="0 0 24 24">
             <circle cx="12" cy="12" r="10" stroke="white" stroke-width="4" fill="none" class="opacity-25"/>
@@ -192,7 +193,7 @@ onMounted(() => {
 
     <!-- ERROR -->
     <div v-if="error" class="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">
-      <span>⚠️</span> {{ error }}
+<ExclamationTriangleIcon class="w-5 h-5 shrink-0" /> {{ error }}
     </div>
 
     <!-- LOADING -->
@@ -230,7 +231,7 @@ onMounted(() => {
                     Permisos
                   </button>
                   <button @click="openEditModal(role)"
-                    class="bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 text-xs font-medium transition-colors">
+                    class="bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700 text-xs font-medium transition-colors">
                     Editar
                   </button>
                   <button @click="deleteRole(role.id)"
@@ -242,7 +243,7 @@ onMounted(() => {
             </tr>
             <tr v-if="roles.length === 0">
               <td colspan="3" class="px-4 py-12 text-center">
-                <div class="text-3xl mb-2">🎭</div>
+                <ShieldCheckIcon class="w-8 h-8 mx-auto mb-2 text-gray-300" />
                 <p class="text-gray-400 text-sm">No hay roles creados.</p>
               </td>
             </tr>
@@ -258,7 +259,7 @@ onMounted(() => {
         <div class="text-sm text-gray-400 mb-3">{{ role.description || "Sin descripción" }}</div>
         <div class="flex gap-2">
           <button @click="openPermissionsModal(role.id)" class="flex-1 bg-emerald-500 text-white py-2 rounded-xl text-sm font-medium hover:bg-emerald-600 transition-colors">Permisos</button>
-          <button @click="openEditModal(role)" class="flex-1 bg-blue-600 text-white py-2 rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors">Editar</button>
+          <button @click="openEditModal(role)" class="flex-1 bg-indigo-600 text-white py-2 rounded-xl text-sm font-medium hover:bg-indigo-700 transition-colors">Editar</button>
           <button @click="deleteRole(role.id)" class="flex-1 bg-red-50 text-red-600 border border-red-200 py-2 rounded-xl text-sm font-medium hover:bg-red-100 transition-colors">Eliminar</button>
         </div>
       </div>
@@ -274,15 +275,15 @@ onMounted(() => {
         <div class="p-6 space-y-4">
           <div>
             <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Nombre</label>
-            <input v-model="editForm.name" class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none" />
+            <input v-model="editForm.name" class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-400 focus:border-transparent outline-none" />
           </div>
           <div>
             <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Descripción</label>
-            <input v-model="editForm.description" class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none" />
+            <input v-model="editForm.description" class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-400 focus:border-transparent outline-none" />
           </div>
           <div class="flex gap-3 pt-1">
             <button @click="updateRole" :disabled="actionLoading"
-              class="flex-1 bg-blue-600 text-white py-2.5 rounded-xl hover:bg-blue-700 disabled:opacity-50 font-medium text-sm transition-colors flex items-center justify-center gap-2">
+              class="flex-1 bg-indigo-600 text-white py-2.5 rounded-xl hover:bg-indigo-700 disabled:opacity-50 font-medium text-sm transition-colors flex items-center justify-center gap-2">
               <svg v-if="actionLoading" class="animate-spin h-4 w-4" viewBox="0 0 24 24">
                 <circle cx="12" cy="12" r="10" stroke="white" stroke-width="4" fill="none" class="opacity-25"/>
                 <path fill="white" d="M4 12a8 8 0 018-8v8z" class="opacity-75"/>
@@ -317,7 +318,7 @@ onMounted(() => {
           <input
             v-model="searchPerm"
             placeholder="Buscar permiso..."
-            class="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none"
+            class="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-400 focus:border-transparent outline-none"
           />
         </div>
 
@@ -336,7 +337,7 @@ onMounted(() => {
               v-if="!hasPermission(p.id)"
               @click="assignPermission(p.id)"
               :disabled="actionLoading"
-              class="bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 text-xs font-medium transition-colors disabled:opacity-50 shrink-0"
+              class="bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700 text-xs font-medium transition-colors disabled:opacity-50 shrink-0"
             >
               Asignar
             </button>

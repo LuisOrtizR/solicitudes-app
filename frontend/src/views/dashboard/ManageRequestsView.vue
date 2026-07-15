@@ -5,6 +5,19 @@ import api from "@/api/axios";
 import type { Request, RequestStatus, RequestPriority } from "@/types/request.types";
 import { useAuthStore } from "@/stores/auth.store";
 import { useRouter } from "vue-router";
+import {
+  NoSymbolIcon,
+  ExclamationTriangleIcon,
+  InboxIcon,
+  TrashIcon,
+  ClipboardDocumentListIcon,
+  LockClosedIcon,
+  UserIcon,
+  CalendarDaysIcon,
+  WrenchScrewdriverIcon,
+  CheckCircleIcon,
+  PencilSquareIcon,
+} from "@heroicons/vue/24/outline";
 
 const auth   = useAuthStore();
 const router = useRouter();
@@ -193,7 +206,9 @@ const counters = computed(() => [
 
 <template>
   <div v-if="!canManage" class="flex flex-col items-center justify-center py-24 gap-3">
-    <div class="text-5xl">⛔</div>
+    <div class="w-16 h-16 rounded-2xl bg-red-50 text-red-400 flex items-center justify-center">
+      <NoSymbolIcon class="w-8 h-8" />
+    </div>
     <h2 class="text-xl font-bold text-gray-700">Acceso Denegado</h2>
     <p class="text-gray-400 text-sm">No tienes permisos para gestionar tickets.</p>
   </div>
@@ -212,7 +227,7 @@ const counters = computed(() => [
     </div>
 
     <div v-if="error" class="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">
-      <span>⚠️</span> {{ error }}
+<ExclamationTriangleIcon class="w-5 h-5 shrink-0" /> {{ error }}
     </div>
 
     <div class="grid grid-cols-3 md:grid-cols-6 gap-2">
@@ -229,7 +244,7 @@ const counters = computed(() => [
     </div>
 
     <div class="flex flex-wrap gap-2 items-center">
-      <select v-model="filterStatus" class="text-sm border border-gray-200 rounded-lg px-3 py-1.5 bg-white outline-none focus:ring-2 focus:ring-blue-400">
+      <select v-model="filterStatus" class="text-sm border border-gray-200 rounded-lg px-3 py-1.5 bg-white outline-none focus:ring-2 focus:ring-indigo-400">
         <option value="all">Todos los estados</option>
         <option value="open">Abierta</option>
         <option value="in_progress">En Progreso</option>
@@ -238,7 +253,7 @@ const counters = computed(() => [
         <option value="closed">Cerrada</option>
         <option value="rejected">Rechazada</option>
       </select>
-      <select v-model="filterPriority" class="text-sm border border-gray-200 rounded-lg px-3 py-1.5 bg-white outline-none focus:ring-2 focus:ring-blue-400">
+      <select v-model="filterPriority" class="text-sm border border-gray-200 rounded-lg px-3 py-1.5 bg-white outline-none focus:ring-2 focus:ring-indigo-400">
         <option value="all">Todas las prioridades</option>
         <option value="low">Baja</option>
         <option value="medium">Media</option>
@@ -322,7 +337,7 @@ const counters = computed(() => [
                 </td>
                 <td class="px-3 py-3 text-right">
                   <div class="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button @click="openModal(r)" class="bg-blue-600 text-white px-2.5 py-1 rounded-lg hover:bg-blue-700 text-xs font-medium transition-colors whitespace-nowrap">
+                    <button @click="openModal(r)" class="bg-indigo-600 text-white px-2.5 py-1 rounded-lg hover:bg-indigo-700 text-xs font-medium transition-colors whitespace-nowrap">
                       Gestionar
                     </button>
                     <button v-if="canDelete" @click="openDeleteModal(r.id)" class="text-red-500 border border-red-200 px-2.5 py-1 rounded-lg hover:bg-red-50 text-xs font-medium transition-colors whitespace-nowrap">
@@ -333,7 +348,7 @@ const counters = computed(() => [
               </tr>
               <tr v-if="filtered.length === 0">
                 <td colspan="8" class="px-4 py-12 text-center">
-                  <div class="text-3xl mb-2">📭</div>
+                  <InboxIcon class="w-8 h-8 mx-auto mb-2 text-gray-300" />
                   <p class="text-gray-400 text-sm">No hay solicitudes con estos filtros.</p>
                 </td>
               </tr>
@@ -359,14 +374,16 @@ const counters = computed(() => [
           <span :class="priorityConfig[r.priority]?.color" class="px-2 py-0.5 rounded-lg text-xs">{{ priorityConfig[r.priority]?.label }}</span>
           <span class="text-xs text-gray-400 truncate">{{ r.email }}</span>
         </div>
-        <div class="text-xs text-gray-400 mb-3">🔧 {{ getUserName(r.assigned_to) }}</div>
+        <div class="text-xs text-gray-400 mb-3 flex items-center gap-1">
+          <WrenchScrewdriverIcon class="w-3.5 h-3.5" /> {{ getUserName(r.assigned_to) }}
+        </div>
         <div class="flex gap-2">
-          <button @click="openModal(r)" class="flex-1 bg-blue-600 text-white py-2 rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors">Gestionar</button>
+          <button @click="openModal(r)" class="flex-1 bg-indigo-600 text-white py-2 rounded-xl text-sm font-medium hover:bg-indigo-700 transition-colors">Gestionar</button>
           <button v-if="canDelete" @click="openDeleteModal(r.id)" class="flex-1 bg-red-50 text-red-600 border border-red-200 py-2 rounded-xl text-sm font-medium hover:bg-red-100 transition-colors">Eliminar</button>
         </div>
       </div>
       <div v-if="filtered.length === 0" class="text-center py-12 text-gray-400">
-        <div class="text-3xl mb-2">📭</div>
+        <InboxIcon class="w-8 h-8 mx-auto mb-2 text-gray-300" />
         <p class="text-sm">No hay solicitudes con estos filtros.</p>
       </div>
     </div>
@@ -393,15 +410,17 @@ const counters = computed(() => [
               </span>
             </div>
             <p class="text-sm text-gray-500">{{ current?.description }}</p>
-            <div class="flex flex-wrap gap-x-4 gap-y-1 pt-1">
-              <span class="text-xs text-gray-400">👤 {{ current?.email }}</span>
-              <span class="text-xs text-gray-400">📅 {{ current ? new Date(current.created_at).toLocaleString("es-ES") : "" }}</span>
-              <span class="text-xs text-gray-400">🔧 {{ getUserName(current?.assigned_to) }}</span>
+            <div class="flex flex-wrap gap-x-4 gap-y-1.5 pt-1 items-center">
+              <span class="text-xs text-gray-400 flex items-center gap-1"><UserIcon class="w-3.5 h-3.5" /> {{ current?.email }}</span>
+              <span class="text-xs text-gray-400 flex items-center gap-1"><CalendarDaysIcon class="w-3.5 h-3.5" /> {{ current ? new Date(current.created_at).toLocaleString("es-ES") : "" }}</span>
+              <span class="text-xs text-gray-400 flex items-center gap-1"><WrenchScrewdriverIcon class="w-3.5 h-3.5" /> {{ getUserName(current?.assigned_to) }}</span>
             </div>
           </div>
 
           <div v-if="isLocked" class="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-2xl">
-            <span class="text-2xl">🔒</span>
+            <div class="w-9 h-9 rounded-xl bg-red-100 text-red-500 flex items-center justify-center shrink-0">
+              <LockClosedIcon class="w-4.5 h-4.5" />
+            </div>
             <div>
               <p class="text-sm font-semibold text-red-700">Solicitud bloqueada</p>
               <p class="text-xs text-red-500 mt-0.5">Está <strong>{{ statusConfig[current?.status ?? ""]?.label }}</strong> y no puede modificarse.</p>
@@ -412,7 +431,7 @@ const counters = computed(() => [
             <div class="grid grid-cols-2 gap-4">
               <div>
                 <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Estado</label>
-                <select v-model="form.status" class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none">
+                <select v-model="form.status" class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-indigo-400 focus:border-transparent outline-none">
                   <option value="open">Abierta</option>
                   <option value="in_progress">En Progreso</option>
                   <option value="waiting_user">Esperando Usuario</option>
@@ -423,7 +442,7 @@ const counters = computed(() => [
               </div>
               <div>
                 <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Prioridad</label>
-                <select v-model="form.priority" class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none">
+                <select v-model="form.priority" class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-indigo-400 focus:border-transparent outline-none">
                   <option value="low">Baja</option>
                   <option value="medium">Media</option>
                   <option value="high">Alta</option>
@@ -433,18 +452,19 @@ const counters = computed(() => [
             </div>
             <div>
               <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Asignar a</label>
-              <select v-model="form.assigned_to" class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none">
+              <select v-model="form.assigned_to" class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-indigo-400 focus:border-transparent outline-none">
                 <option :value="null">— Sin asignar —</option>
                 <option v-for="u in users" :key="u.id" :value="u.id">{{ u.name }} ({{ u.email }})</option>
               </select>
             </div>
             <div>
-              <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-                {{ form.status === "resolved" ? "✅ Resolución" : "📝 Notas / Resolución" }}
+              <label class="flex items-center gap-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                <component :is="form.status === 'resolved' ? CheckCircleIcon : PencilSquareIcon" class="w-3.5 h-3.5" />
+                {{ form.status === "resolved" ? "Resolución" : "Notas / Resolución" }}
               </label>
               <textarea
                 v-model="form.resolution" rows="4"
-                class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none resize-none"
+                class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-400 focus:border-transparent outline-none resize-none"
                 :placeholder="form.status === 'resolved' ? 'Describe cómo se resolvió...' : 'Notas internas o comentarios...'"
               />
             </div>
@@ -454,7 +474,7 @@ const counters = computed(() => [
             <button @click="loadHistory" :disabled="historyLoading"
               class="w-full flex items-center justify-between px-4 py-3 text-sm text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-50">
               <span class="flex items-center gap-2 font-medium">
-                <span>📋</span>
+                <ClipboardDocumentListIcon class="w-4 h-4" />
                 <span>{{ historyLoading ? "Cargando..." : showHistory ? "Actualizar historial" : "Ver historial de cambios" }}</span>
               </span>
               <span v-if="history.length > 0" class="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
@@ -465,7 +485,7 @@ const counters = computed(() => [
               <div v-if="history.length === 0" class="px-4 py-6 text-center text-sm text-gray-400 italic">Sin cambios registrados.</div>
               <div v-else class="max-h-52 overflow-y-auto divide-y divide-gray-50">
                 <div v-for="h in history" :key="h.id" class="px-4 py-3 flex items-start gap-3 hover:bg-gray-50">
-                  <div class="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 text-xs font-bold shrink-0 mt-0.5">
+                  <div class="w-7 h-7 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 text-xs font-bold shrink-0 mt-0.5">
                     {{ h.changed_by_name?.charAt(0)?.toUpperCase() ?? "?" }}
                   </div>
                   <div class="flex-1 min-w-0">
@@ -479,7 +499,7 @@ const counters = computed(() => [
 
           <div class="flex gap-3 pt-1">
             <button v-if="!isLocked" @click="save" :disabled="saving"
-              class="flex-1 bg-blue-600 text-white py-2.5 rounded-xl hover:bg-blue-700 disabled:opacity-50 flex justify-center items-center gap-2 font-medium text-sm transition-colors">
+              class="flex-1 bg-indigo-600 text-white py-2.5 rounded-xl hover:bg-indigo-700 disabled:opacity-50 flex justify-center items-center gap-2 font-medium text-sm transition-colors">
               <svg v-if="saving" class="animate-spin h-4 w-4" viewBox="0 0 24 24">
                 <circle cx="12" cy="12" r="10" stroke="white" stroke-width="4" fill="none" class="opacity-25"/>
                 <path fill="white" d="M4 12a8 8 0 018-8v8z" class="opacity-75"/>
@@ -500,7 +520,7 @@ const counters = computed(() => [
 
         <div class="flex justify-between items-center p-6 border-b border-gray-100">
           <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center text-xl">🗑️</div>
+            <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center text-red-500"><TrashIcon class="w-5 h-5" /></div>
             <div>
               <h2 class="text-base font-bold text-gray-900">Eliminar Solicitud</h2>
               <p class="text-xs text-gray-400 mt-0.5">Esta acción no se puede deshacer</p>
@@ -511,7 +531,7 @@ const counters = computed(() => [
 
         <div class="p-6 space-y-4">
           <div class="bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3 flex items-start gap-2">
-            <span class="text-amber-500 mt-0.5">⚠️</span>
+            <ExclamationTriangleIcon class="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />
             <p class="text-xs text-amber-700">
               La solicitud pasará a eliminados y será <strong>purgada automáticamente después de 15 días</strong>.
             </p>

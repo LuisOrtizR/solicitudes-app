@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from "vue";
 import { permissionApi, type Permission } from "@/api/endpoints/permission.api";
+import { ExclamationTriangleIcon, InboxIcon } from "@heroicons/vue/24/outline";
 
 const permissions = ref<Permission[]>([]);
 const loading = ref(false);
@@ -128,7 +129,7 @@ onMounted(() => fetchPermissions());
 
         <button
           @click="openCreate"
-          class="bg-blue-600 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors"
+          class="bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-indigo-700 transition-colors"
         >
           + Nuevo
         </button>
@@ -140,7 +141,7 @@ onMounted(() => fetchPermissions());
       v-if="error"
       class="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm"
     >
-      ⚠️ {{ error }}
+<ExclamationTriangleIcon class="w-5 h-5 shrink-0" /> {{ error }}
     </div>
 
     <!-- LOADING -->
@@ -197,7 +198,7 @@ onMounted(() => fetchPermissions());
                       class="font-mono text-xs px-2.5 py-1 rounded-lg whitespace-nowrap"
                       :class="p.is_protected
                         ? 'bg-gray-200 text-gray-500'
-                        : 'bg-blue-50 text-blue-600'"
+                        : 'bg-indigo-50 text-indigo-600'"
                     >
                       {{ p.name }}
                     </span>
@@ -222,7 +223,7 @@ onMounted(() => fetchPermissions());
                   >
                     <button
                       @click="openEdit(p)"
-                      class="bg-blue-600 text-white px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-blue-700 transition-colors"
+                      class="bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-indigo-700 transition-colors"
                     >
                       Editar
                     </button>
@@ -239,7 +240,7 @@ onMounted(() => fetchPermissions());
 
               <tr v-if="permissions.length === 0">
                 <td colspan="3" class="px-4 py-12 text-center">
-                  <div class="text-3xl mb-2">📭</div>
+                  <InboxIcon class="w-8 h-8 mx-auto mb-2 text-gray-300" />
                   <p class="text-gray-400 text-sm">
                     No hay permisos registrados.
                   </p>
@@ -268,7 +269,7 @@ onMounted(() => fetchPermissions());
           :class="[
             'px-3 py-1 rounded-lg text-sm transition-colors',
             page === currentPage
-              ? 'bg-blue-600 text-white'
+              ? 'bg-indigo-600 text-white'
               : 'border border-gray-200 hover:bg-gray-50'
           ]"
         >
@@ -306,7 +307,7 @@ onMounted(() => fetchPermissions());
             </label>
             <input
               v-model="form.name"
-              class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none"
+              class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-indigo-400 focus:border-transparent outline-none"
               placeholder="Ej: users_create"
             />
           </div>
@@ -317,7 +318,7 @@ onMounted(() => fetchPermissions());
             </label>
             <input
               v-model="form.description"
-              class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none"
+              class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-indigo-400 focus:border-transparent outline-none"
               placeholder="Descripción del permiso"
             />
           </div>
@@ -325,7 +326,7 @@ onMounted(() => fetchPermissions());
           <div class="flex gap-3 pt-2">
             <button
               @click="savePermission"
-              class="flex-1 bg-blue-600 text-white py-2.5 rounded-xl hover:bg-blue-700 font-medium text-sm transition-colors"
+              class="flex-1 bg-indigo-600 text-white py-2.5 rounded-xl hover:bg-indigo-700 font-medium text-sm transition-colors"
             >
               Guardar
             </button>

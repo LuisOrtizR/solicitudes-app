@@ -27,6 +27,9 @@ const permissions = [
   { name: 'requests_read_all',  description: 'Ver todas las solicitudes (admin/agente)', is_protected: true },
   { name: 'requests_update',    description: 'Actualizar una solicitud',                 is_protected: true },
   { name: 'requests_delete',    description: 'Eliminar una solicitud',                   is_protected: true },
+
+  // ANALITICA
+  { name: 'analytics_read',     description: 'Ver metricas y analitica del sistema',     is_protected: true },
 ];
 
 async function seedPermissions() {

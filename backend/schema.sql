@@ -191,12 +191,35 @@ CREATE TABLE public.requests (
     closed_at timestamp without time zone,
     deleted_at timestamp without time zone,
     deleted_reason text,
+    category character varying(30) DEFAULT 'otro'::character varying NOT NULL,
+    CONSTRAINT check_request_category CHECK (((category)::text = ANY ((ARRAY['soporte_tecnico'::character varying, 'accesos_permisos'::character varying, 'hardware'::character varying, 'software'::character varying, 'otro'::character varying])::text[]))),
     CONSTRAINT check_request_priority CHECK (((priority)::text = ANY ((ARRAY['low'::character varying, 'medium'::character varying, 'high'::character varying, 'urgent'::character varying])::text[]))),
     CONSTRAINT check_request_status CHECK (((status)::text = ANY ((ARRAY['open'::character varying, 'in_progress'::character varying, 'waiting_user'::character varying, 'resolved'::character varying, 'closed'::character varying, 'rejected'::character varying])::text[])))
 );
 
 
 ALTER TABLE public.requests OWNER TO postgres;
+
+--
+-- Name: sla_rules; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.sla_rules (
+    priority character varying(20) NOT NULL,
+    hours_to_resolve integer NOT NULL,
+    hours_to_first_response integer NOT NULL,
+    CONSTRAINT sla_rules_pkey PRIMARY KEY (priority),
+    CONSTRAINT sla_rules_priority_check CHECK (((priority)::text = ANY ((ARRAY['low'::character varying, 'medium'::character varying, 'high'::character varying, 'urgent'::character varying])::text[])))
+);
+
+
+ALTER TABLE public.sla_rules OWNER TO postgres;
+
+INSERT INTO public.sla_rules (priority, hours_to_resolve, hours_to_first_response) VALUES
+  ('urgent', 4, 1),
+  ('high', 24, 6),
+  ('medium', 48, 12),
+  ('low', 72, 18);
 
 --
 -- Name: role_permissions; Type: TABLE; Schema: public; Owner: postgres
@@ -406,6 +429,13 @@ CREATE INDEX idx_requests_assigned_to ON public.requests USING btree (assigned_t
 --
 
 CREATE INDEX idx_requests_created_at ON public.requests USING btree (created_at DESC);
+
+
+--
+-- Name: idx_requests_category; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_requests_category ON public.requests USING btree (category);
 
 
 --

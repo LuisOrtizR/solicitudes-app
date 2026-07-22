@@ -14,6 +14,7 @@ import {
   ShieldCheckIcon,
   KeyIcon,
   TicketIcon,
+  ChartBarIcon,
 } from "@heroicons/vue/24/outline";
 
 const auth = useAuthStore();
@@ -32,6 +33,10 @@ const displayRole = computed<string>(() => {
 const canViewUsers = computed(() => auth.hasPermission("users_read") || auth.isAdmin);
 const canViewRoles = computed(() => auth.hasPermission("manage_roles") || auth.isAdmin);
 const canViewPermissions = computed(() => auth.hasPermission("manage_permissions") || auth.isAdmin);
+// Sin `|| auth.isAdmin`, a diferencia de las anteriores: el guard de la ruta
+// /dashboard/analytics tampoco tiene ese bypass, así que si el link lo tuviera
+// un admin sin el permiso vería el link pero sería rechazado al entrar.
+const canViewAnalytics = computed(() => auth.hasPermission("analytics_read"));
 const canManageRequests = computed(
   () => auth.hasPermission("requests_read.all") || auth.hasRole("supervisor") || auth.isAdmin
 );
@@ -47,9 +52,12 @@ const adminItems = computed(() => [
   { to: "/dashboard/users", label: "Usuarios", icon: UsersIcon, show: canViewUsers.value },
   { to: "/dashboard/roles", label: "Roles", icon: ShieldCheckIcon, show: canViewRoles.value },
   { to: "/dashboard/permissions", label: "Permisos", icon: KeyIcon, show: canViewPermissions.value },
+  { to: "/dashboard/analytics", label: "Analítica", icon: ChartBarIcon, show: canViewAnalytics.value },
 ]);
 
-const showAdminSection = computed(() => canViewUsers.value || canViewRoles.value || canViewPermissions.value);
+const showAdminSection = computed(
+  () => canViewUsers.value || canViewRoles.value || canViewPermissions.value || canViewAnalytics.value
+);
 
 const handleLogout = async () => {
   await auth.logout();

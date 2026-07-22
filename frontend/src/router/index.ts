@@ -83,6 +83,12 @@ const router = createRouter({
           name: "deleted-requests",
           component: () => import("@/views/dashboard/Deletedrequestsview.vue"),
         },
+        {
+          path: "analytics",
+          name: "analytics",
+          component: () => import("@/views/dashboard/DashboardAnalyticsView.vue"),
+          meta: { requiresPermission: "analytics_read" },
+        },
       ],
     },
   ],

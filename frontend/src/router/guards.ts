@@ -40,5 +40,13 @@ export const authGuard = async (
     }
   }
 
+  // Verificar si requiere un permiso específico
+  if (to.meta.requiresPermission) {
+    const permission = to.meta.requiresPermission as string;
+    if (!auth.hasPermission(permission)) {
+      return next("/dashboard");
+    }
+  }
+
   next();
 };

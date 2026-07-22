@@ -9,7 +9,8 @@ const validate = require('../shared/middleware/validate.middleware');
 const {
   idParamSchema,
   updateUserSchema,
-  changeRoleSchema
+  changeRoleSchema,
+  listUsersQuerySchema
 } = require('./user.validator');
 
 router.get('/me', authenticate, controller.getMe);
@@ -20,6 +21,7 @@ router.get(
   '/',
   authenticate,
   authorizePermission('users_read'),
+  validate(listUsersQuerySchema, 'query'),
   controller.getAll
 );
 

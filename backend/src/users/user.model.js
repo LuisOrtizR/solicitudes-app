@@ -99,41 +99,78 @@ const findUserWithRolesAndPermissionsById = async (id) => {
   return user;
 };
 
-const getAllUsers = async () => {
+const allowedUserSort = ['name', 'email', 'created_at'];
+
+const _buildUserConditions = ({ search, role, isActive }) => {
+  const conditions = [];
+  const values = [];
+  let idx = 1;
+
+  if (search) {
+    conditions.push(`(u.name ILIKE $${idx} OR u.email ILIKE $${idx})`);
+    values.push(`%${search}%`);
+    idx++;
+  }
+  if (isActive !== undefined) {
+    conditions.push(`u.is_active = $${idx++}`);
+    values.push(isActive);
+  }
+  if (role) {
+    conditions.push(
+      `EXISTS (SELECT 1 FROM user_roles ur2 JOIN roles r2 ON ur2.role_id = r2.id WHERE ur2.user_id = u.id AND r2.name = $${idx++})`
+    );
+    values.push(role);
+  }
+
+  return {
+    where: conditions.length ? `WHERE ${conditions.join(' AND ')}` : '',
+    values,
+    nextIdx: idx,
+  };
+};
+
+const getUsersPaginated = async ({ limit, offset, search, role, isActive, sort, order }) => {
+  const { where, values, nextIdx } = _buildUserConditions({ search, role, isActive });
+
+  const safeSort = allowedUserSort.includes(sort) ? sort : 'created_at';
+  const safeOrder = order === 'ASC' ? 'ASC' : 'DESC';
+
+  const finalValues = [...values, limit, offset];
+
   const { rows } = await pool.query(
     `
-    SELECT 
-      u.id,
-      u.name,
-      u.email,
-      u.is_active,
-      u.created_at,
-      u.is_protected,
-      COALESCE(
-        ARRAY_AGG(DISTINCT r.name)
-        FILTER (WHERE r.name IS NOT NULL),
-        ARRAY[]::VARCHAR[]
-      ) AS roles,
-      COALESCE(
-        ARRAY_AGG(DISTINCT p.name)
-        FILTER (WHERE p.name IS NOT NULL),
-        ARRAY[]::VARCHAR[]
-      ) AS permissions
+    SELECT
+      u.id, u.name, u.email, u.is_active, u.created_at, u.is_protected,
+      COALESCE(ARRAY_AGG(DISTINCT r.name) FILTER (WHERE r.name IS NOT NULL), ARRAY[]::VARCHAR[]) AS roles,
+      COALESCE(ARRAY_AGG(DISTINCT p.name) FILTER (WHERE p.name IS NOT NULL), ARRAY[]::VARCHAR[]) AS permissions
     FROM users u
     LEFT JOIN user_roles ur ON u.id = ur.user_id
     LEFT JOIN roles r ON ur.role_id = r.id
     LEFT JOIN role_permissions rp ON r.id = rp.role_id
     LEFT JOIN permissions p ON rp.permission_id = p.id
+    ${where}
     GROUP BY u.id
-    ORDER BY u.created_at DESC
-    `
+    ORDER BY u.${safeSort} ${safeOrder}
+    LIMIT $${nextIdx} OFFSET $${nextIdx + 1}
+    `,
+    finalValues
   );
 
   return rows.map(user => ({
     ...user,
     roles: parsePostgresArray(user.roles),
-    permissions: parsePostgresArray(user.permissions)
+    permissions: parsePostgresArray(user.permissions),
   }));
+};
+
+const countUsersFiltered = async ({ search, role, isActive }) => {
+  const { where, values } = _buildUserConditions({ search, role, isActive });
+
+  const { rows } = await pool.query(
+    `SELECT COUNT(*) FROM users u ${where}`,
+    values
+  );
+  return parseInt(rows[0].count, 10);
 };
 
 const getUserById = async (id) => {
@@ -290,7 +327,8 @@ const countUsersByRole = async (roleName) => {
 
 module.exports = {
   createUser,
-  getAllUsers,
+  getUsersPaginated,
+  countUsersFiltered,
   getUserById,
   updateUser,
   deleteUser,

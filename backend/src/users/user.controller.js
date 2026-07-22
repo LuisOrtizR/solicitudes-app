@@ -16,8 +16,8 @@ const isAdminOrSelf = (user, id) =>
   user.roles.includes('admin') || user.id === id;
 
 const getAll = asyncHandler(async (req, res) => {
-  const users = await getUsersService();
-  res.json({ total: users.length, data: users });
+  const result = await getUsersService(req.query);
+  res.json({ success: true, ...result });
 });
 
 const getOne = asyncHandler(async (req, res) => {

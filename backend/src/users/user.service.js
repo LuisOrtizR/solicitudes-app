@@ -1,5 +1,6 @@
 const {
-  getAllUsers,
+  getUsersPaginated,
+  countUsersFiltered,
   getUserById,
   updateUser,
   deleteUser,
@@ -10,7 +11,20 @@ const {
 
 const AppError = require('../shared/utils/AppError');
 
-const getUsersService = () => getAllUsers();
+const getUsersService = async ({ page = 1, limit = 10, search, role, is_active, sort, order }) => {
+  const offset = (page - 1) * limit;
+
+  const data = await getUsersPaginated({ limit, offset, search, role, isActive: is_active, sort, order });
+  const total = await countUsersFiltered({ search, role, isActive: is_active });
+
+  return {
+    total,
+    page,
+    limit,
+    totalPages: Math.ceil(total / limit) || 1,
+    data,
+  };
+};
 
 const getUserService = async (id) => {
   const user = await getUserById(id);

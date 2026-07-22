@@ -80,18 +80,18 @@ const autofill = () => {
         v-if="open"
         role="dialog"
         aria-label="Credenciales de acceso de prueba"
-        class="fixed inset-x-0 bottom-0 z-50 border-t border-white/10 bg-slate-900/95 backdrop-blur-sm
+        class="fixed inset-x-0 bottom-0 z-50 border-t border-gray-200 dark:border-white/10 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm
                px-4 py-3.5 sm:px-6"
       >
         <div class="mx-auto max-w-6xl flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
           <!-- Etiqueta -->
           <div class="flex items-center gap-2.5 shrink-0">
-            <div class="w-8 h-8 rounded-lg bg-indigo-500/15 border border-indigo-400/20 flex items-center justify-center">
-              <KeyIcon class="w-4 h-4 text-indigo-300" aria-hidden="true" />
+            <div class="w-8 h-8 rounded-lg bg-primary-50 dark:bg-primary-500/15 border border-primary-100 dark:border-primary-400/20 flex items-center justify-center">
+              <KeyIcon class="w-4 h-4 text-primary-600 dark:text-primary-300" aria-hidden="true" />
             </div>
             <div>
-              <p class="text-white text-sm font-medium leading-tight">Entorno de demostración</p>
-              <p class="text-slate-400 text-xs leading-tight">Credenciales de solo lectura</p>
+              <p class="text-gray-900 dark:text-white text-sm font-medium leading-tight">Entorno de demostración</p>
+              <p class="text-gray-500 dark:text-slate-400 text-xs leading-tight">Credenciales de solo lectura</p>
             </div>
           </div>
 
@@ -99,22 +99,22 @@ const autofill = () => {
           <div class="flex flex-col sm:flex-row gap-2 flex-1 min-w-0" aria-live="polite">
             <button
               @click="copy('email')"
-              class="flex items-center justify-between gap-2 bg-white/5 hover:bg-white/10 border border-white/10
+              class="flex items-center justify-between gap-2 bg-gray-50 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/10 border border-gray-200 dark:border-white/10
                      rounded-lg px-3 py-2 text-left transition min-w-0 sm:w-56"
             >
-              <span class="text-slate-300 text-xs font-mono truncate">{{ DEMO_CREDENTIALS.email }}</span>
-              <span class="text-indigo-300 text-[11px] font-medium shrink-0">
+              <span class="text-gray-700 dark:text-slate-300 text-xs font-mono truncate">{{ DEMO_CREDENTIALS.email }}</span>
+              <span class="text-primary-600 dark:text-indigo-300 text-[11px] font-medium shrink-0">
                 {{ copied === "email" ? "Copiado ✓" : "Copiar" }}
               </span>
             </button>
 
             <button
               @click="copy('password')"
-              class="flex items-center justify-between gap-2 bg-white/5 hover:bg-white/10 border border-white/10
+              class="flex items-center justify-between gap-2 bg-gray-50 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/10 border border-gray-200 dark:border-white/10
                      rounded-lg px-3 py-2 text-left transition min-w-0 sm:w-44"
             >
-              <span class="text-slate-300 text-xs font-mono truncate">{{ DEMO_CREDENTIALS.password }}</span>
-              <span class="text-indigo-300 text-[11px] font-medium shrink-0">
+              <span class="text-gray-700 dark:text-slate-300 text-xs font-mono truncate">{{ DEMO_CREDENTIALS.password }}</span>
+              <span class="text-primary-600 dark:text-indigo-300 text-[11px] font-medium shrink-0">
                 {{ copied === "password" ? "Copiado ✓" : "Copiar" }}
               </span>
             </button>
@@ -124,7 +124,7 @@ const autofill = () => {
           <div class="flex items-center gap-2 shrink-0">
             <button
               @click="autofill"
-              class="flex-1 sm:flex-none bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium
+              class="flex-1 sm:flex-none bg-primary-600 hover:bg-primary-700 dark:hover:bg-primary-500 text-white text-xs font-medium
                      px-4 py-2 rounded-lg transition active:scale-[0.98]"
             >
               Autocompletar
@@ -132,7 +132,7 @@ const autofill = () => {
             <button
               @click="close"
               aria-label="Cerrar aviso"
-              class="p-2 rounded-lg text-slate-500 hover:text-slate-300 hover:bg-white/5 transition"
+              class="p-2 rounded-lg text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 hover:bg-gray-100 dark:hover:bg-white/5 transition"
             >
               <XMarkIcon class="w-4 h-4" />
             </button>
@@ -151,11 +151,11 @@ const autofill = () => {
         v-if="!open && dismissed"
         @click="reopen"
         aria-label="Mostrar credenciales de demo"
-        class="fixed bottom-4 left-4 z-50 flex items-center gap-1.5 bg-slate-800/90 hover:bg-slate-700
-               border border-white/10 text-slate-300 text-xs font-medium px-3 py-2 rounded-full
+        class="fixed bottom-4 left-4 z-50 flex items-center gap-1.5 bg-white/90 dark:bg-slate-800/90 hover:bg-gray-50 dark:hover:bg-slate-700
+               border border-gray-200 dark:border-white/10 text-gray-700 dark:text-slate-300 text-xs font-medium px-3 py-2 rounded-full
                shadow-lg backdrop-blur-sm transition"
       >
-        <KeyIcon class="w-3.5 h-3.5 text-indigo-300" aria-hidden="true" />
+        <KeyIcon class="w-3.5 h-3.5 text-primary-600 dark:text-indigo-300" aria-hidden="true" />
         Demo
       </button>
     </Transition>

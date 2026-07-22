@@ -1,16 +1,14 @@
 const {
   createRequest,
-  getAllRequests,
-  getRequestsByUser,
   getRequestById,
   updateRequestFull,
   softDeleteRequest,
-  getDeletedRequests,
-  getDeletedRequestsByUser,
   getExpiredDeletedRequests,
   hardDeleteRequest,
   logRequestHistory,
-  getRequestHistory
+  getRequestHistory,
+  getRequests,
+  countRequests
 } = require('./request.model');
 
 const AppError = require('../shared/utils/AppError');
@@ -127,9 +125,21 @@ const deleteRequestById = async (id, user, reason) => {
   return softDeleteRequest(id, reason.trim());
 };
 
-const getDeletedRequestsService = () => getDeletedRequests();
+const listRequestsService = async ({ scope, userId, page = 1, limit = 10, search, status, assignedTo, sort, order }) => {
+  const offset = (page - 1) * limit;
 
-const getDeletedRequestsByUserService = (userId) => getDeletedRequestsByUser(userId);
+  const data = await getRequests({ scope, userId, limit, offset, search, status, assignedTo, sort, order });
+  const totalResult = await countRequests({ scope, userId, search, status, assignedTo });
+  const total = Number(totalResult.rows[0].count);
+
+  return {
+    total,
+    page,
+    limit,
+    totalPages: Math.ceil(total / limit) || 1,
+    data: data.rows,
+  };
+};
 
 const getHistoryByRequest = (requestId) => getRequestHistory(requestId);
 
@@ -156,12 +166,9 @@ const purgeExpiredRequests = async (sendPurgeNotificationEmail) => {
 module.exports = {
   createNewRequest,
   updateExistingRequest,
-  getAllRequests,
-  getRequestsByUser,
   getRequestById,
   deleteRequestById,
-  getDeletedRequestsService,
-  getDeletedRequestsByUserService,
+  listRequestsService,
   getHistoryByRequest,
   purgeExpiredRequests
 };

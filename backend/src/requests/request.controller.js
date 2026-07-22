@@ -1,12 +1,9 @@
 const {
   createNewRequest,
   updateExistingRequest,
-  getAllRequests,
-  getRequestsByUser,
   getRequestById,
   deleteRequestById,
-  getDeletedRequestsService,
-  getDeletedRequestsByUserService,
+  listRequestsService,
   getHistoryByRequest
 } = require('./request.service');
 
@@ -19,21 +16,22 @@ const create = asyncHandler(async (req, res) => {
 });
 
 const getAll = asyncHandler(async (req, res) => {
-  const result = await getAllRequests();
-  res.json(result.rows);
+  const result = await listRequestsService({ ...req.query, scope: 'all' });
+  res.json({ success: true, ...result });
 });
 
 const getMine = asyncHandler(async (req, res) => {
-  const result = await getRequestsByUser(req.user.id);
-  res.json(result.rows);
+  const { assignedTo, ...rest } = req.query;
+  const result = await listRequestsService({ ...rest, scope: 'mine', userId: req.user.id });
+  res.json({ success: true, ...result });
 });
 
 const getDeleted = asyncHandler(async (req, res) => {
+  const { assignedTo, ...rest } = req.query;
   const isPrivileged = req.user.roles.includes('admin') || req.user.roles.includes('supervisor');
-  const result = isPrivileged
-    ? await getDeletedRequestsService()
-    : await getDeletedRequestsByUserService(req.user.id);
-  res.json(result.rows);
+  const scope = isPrivileged ? 'deleted' : 'deleted-mine';
+  const result = await listRequestsService({ ...rest, scope, userId: req.user.id });
+  res.json({ success: true, ...result });
 });
 
 const isPrivileged = (user) =>

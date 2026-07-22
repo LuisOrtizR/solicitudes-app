@@ -22,9 +22,19 @@ const deleteRequestSchema = z.object({
   reason: z.string().min(5, 'El motivo debe tener al menos 5 caracteres')
 });
 
+const listRequestsQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(10),
+  search: z.string().trim().max(200).optional(),
+  status: z.enum(statusEnum).optional(),
+  assignedTo: z.string().uuid().optional(),
+  sort: z.enum(['created_at', 'title', 'status', 'priority']).default('created_at'),
+  order: z.enum(['ASC', 'DESC']).default('DESC'),
+});
 
 module.exports = {
   createRequestSchema,
   updateRequestSchema,
-  deleteRequestSchema
+  deleteRequestSchema,
+  listRequestsQuerySchema
 };

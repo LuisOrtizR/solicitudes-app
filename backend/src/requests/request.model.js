@@ -8,25 +8,6 @@ const createRequest = (title, description, userId, priority = 'medium') =>
     [title, description, userId, priority]
   );
 
-const getAllRequests = () =>
-  pool.query(
-    `SELECT r.*, u.email
-     FROM requests r
-     JOIN users u ON u.id = r.user_id
-     WHERE r.deleted_at IS NULL
-     ORDER BY r.created_at DESC`
-  );
-
-const getRequestsByUser = (userId) =>
-  pool.query(
-    `SELECT r.*, u.email
-     FROM requests r
-     JOIN users u ON u.id = r.user_id
-     WHERE r.user_id = $1 AND r.deleted_at IS NULL
-     ORDER BY r.created_at DESC`,
-    [userId]
-  );
-
 const getRequestById = (id) =>
   pool.query(
     `SELECT r.*, u.email
@@ -74,15 +55,6 @@ const softDeleteRequest = (id, reason) =>
      WHERE id = $2
      RETURNING id`,
     [reason, id]
-  );
-
-const getDeletedRequests = () =>
-  pool.query(
-    `SELECT r.*, u.email
-     FROM requests r
-     JOIN users u ON u.id = r.user_id
-     WHERE r.deleted_at IS NOT NULL
-     ORDER BY r.deleted_at DESC`
   );
 
 const getExpiredDeletedRequests = () =>
@@ -133,27 +105,76 @@ const getRequestHistory = (requestId) =>
      ORDER BY rh.created_at DESC`,
     [requestId]
   );
-  const getDeletedRequestsByUser = (userId) =>
-  pool.query(
+
+const _buildRequestConditions = ({ scope, userId, search, status, assignedTo }) => {
+  const conditions = [];
+  const values = [];
+  let idx = 1;
+
+  if (scope === 'mine' || scope === 'deleted-mine') {
+    conditions.push(scope === 'mine' ? 'r.deleted_at IS NULL' : 'r.deleted_at IS NOT NULL');
+    conditions.push(`r.user_id = $${idx++}`);
+    values.push(userId);
+  } else {
+    conditions.push(scope === 'all' ? 'r.deleted_at IS NULL' : 'r.deleted_at IS NOT NULL');
+  }
+
+  if (search) {
+    conditions.push(`(r.title ILIKE $${idx} OR r.description ILIKE $${idx})`);
+    values.push(`%${search}%`);
+    idx++;
+  }
+  if (status) {
+    conditions.push(`r.status = $${idx++}`);
+    values.push(status);
+  }
+  if (assignedTo) {
+    conditions.push(`r.assigned_to = $${idx++}`);
+    values.push(assignedTo);
+  }
+
+  return { where: conditions.join(' AND '), values, nextIdx: idx };
+};
+
+const allowedRequestSort = ['created_at', 'title', 'status', 'priority'];
+
+const getRequests = ({ scope, userId, limit, offset, search, status, assignedTo, sort, order }) => {
+  const { where, values, nextIdx } = _buildRequestConditions({ scope, userId, search, status, assignedTo });
+
+  const safeSort = allowedRequestSort.includes(sort) ? sort : 'created_at';
+  const safeOrder = order === 'ASC' ? 'ASC' : 'DESC';
+
+  const finalValues = [...values, limit, offset];
+
+  return pool.query(
     `SELECT r.*, u.email
      FROM requests r
      JOIN users u ON u.id = r.user_id
-     WHERE r.deleted_at IS NOT NULL AND r.user_id = $1
-     ORDER BY r.deleted_at DESC`,
-    [userId]
+     WHERE ${where}
+     ORDER BY r.${safeSort} ${safeOrder}
+     LIMIT $${nextIdx} OFFSET $${nextIdx + 1}`,
+    finalValues
   );
+};
+
+const countRequests = ({ scope, userId, search, status, assignedTo }) => {
+  const { where, values } = _buildRequestConditions({ scope, userId, search, status, assignedTo });
+
+  return pool.query(
+    `SELECT COUNT(*) FROM requests r WHERE ${where}`,
+    values
+  );
+};
 
 module.exports = {
   createRequest,
-  getAllRequests,
-  getRequestsByUser,
   getRequestById,
   updateRequestFull,
   softDeleteRequest,
-  getDeletedRequests,
   getExpiredDeletedRequests,
   hardDeleteRequest,
   logRequestHistory,
   getRequestHistory,
-  getDeletedRequestsByUser
+  getRequests,
+  countRequests
 };

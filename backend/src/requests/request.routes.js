@@ -8,7 +8,8 @@ const validate     = require('../shared/middleware/validate.middleware');
 const {
   createRequestSchema,
   updateRequestSchema,
-  deleteRequestSchema
+  deleteRequestSchema,
+  listRequestsQuerySchema
 } = require('./request.validator');
 
 router.post(
@@ -23,6 +24,7 @@ router.get(
   '/',
   authenticate,
   authorize('requests_read_all'),
+  validate(listRequestsQuerySchema, 'query'),
   controller.getAll
 );
 
@@ -30,6 +32,7 @@ router.get(
   '/mine',
   authenticate,
   authorize('requests_read'),
+  validate(listRequestsQuerySchema, 'query'),
   controller.getMine
 );
 
@@ -37,6 +40,7 @@ router.get(
   '/deleted',
   authenticate,
   authorize('requests_read'),
+  validate(listRequestsQuerySchema, 'query'),
   controller.getDeleted
 );
 

@@ -3,6 +3,8 @@ import { ref, onMounted, computed } from "vue";
 import { roleApi, type Role } from "@/api/endpoints/role.api";
 import { permissionApi, type Permission } from "@/api/endpoints/permission.api";
 import { ExclamationTriangleIcon, ShieldCheckIcon } from "@heroicons/vue/24/outline";
+import BaseButton from "@/components/ui/BaseButton.vue";
+import BaseInput from "@/components/ui/BaseInput.vue";
 
 const roles         = ref<Role[]>([]);
 const permissions   = ref<Permission[]>([]);
@@ -154,45 +156,37 @@ onMounted(() => {
     <!-- HEADER -->
     <div class="flex justify-between items-start">
       <div>
-        <h1 class="text-2xl font-bold text-gray-900 tracking-tight">Roles</h1>
-        <p class="text-sm text-gray-400 mt-0.5">Gestión de roles y permisos</p>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">Roles</h1>
+        <p class="text-sm text-gray-400 dark:text-gray-500 mt-0.5">Gestión de roles y permisos</p>
       </div>
-      <div class="flex items-center gap-2 bg-gray-100 px-4 py-2 rounded-xl shrink-0">
-        <span class="text-xs text-gray-500">Total</span>
-        <span class="text-lg font-bold text-gray-800">{{ roles.length }}</span>
+      <div class="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 px-4 py-2 rounded-xl shrink-0">
+        <span class="text-xs text-gray-500 dark:text-gray-400">Total</span>
+        <span class="text-lg font-bold text-gray-800 dark:text-white">{{ roles.length }}</span>
       </div>
     </div>
 
     <!-- CREAR ROL -->
-    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-      <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Nuevo Rol</p>
+    <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-5">
+      <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Nuevo Rol</p>
       <div class="grid md:grid-cols-3 gap-3">
-        <input
-          v-model="form.name"
-          placeholder="Nombre del rol"
-          class="px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-400 focus:border-transparent outline-none"
-        />
-        <input
-          v-model="form.description"
-          placeholder="Descripción (opcional)"
-          class="px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-400 focus:border-transparent outline-none"
-        />
-        <button
-          @click="createRole"
+        <BaseInput v-model="form.name" placeholder="Nombre del rol" />
+        <BaseInput v-model="form.description" placeholder="Descripción (opcional)" />
+        <BaseButton
+          variant="primary"
           :disabled="!form.name || actionLoading"
-          class="bg-indigo-600 text-white rounded-xl px-4 py-2.5 text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+          @click="createRole"
         >
           <svg v-if="actionLoading" class="animate-spin h-4 w-4" viewBox="0 0 24 24">
             <circle cx="12" cy="12" r="10" stroke="white" stroke-width="4" fill="none" class="opacity-25"/>
             <path fill="white" d="M4 12a8 8 0 018-8v8z" class="opacity-75"/>
           </svg>
           Crear Rol
-        </button>
+        </BaseButton>
       </div>
     </div>
 
     <!-- ERROR -->
-    <div v-if="error" class="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">
+    <div v-if="error" class="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 rounded-xl text-red-600 dark:text-red-400 text-sm">
 <ExclamationTriangleIcon class="w-5 h-5 shrink-0" /> {{ error }}
     </div>
 
@@ -207,44 +201,42 @@ onMounted(() => {
 
     <!-- TABLA DESKTOP -->
     <div v-else class="hidden md:block">
-      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden">
         <table class="w-full text-sm">
           <thead>
-            <tr class="border-b border-gray-100 bg-gray-50">
-              <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Nombre</th>
-              <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Descripción</th>
-              <th class="px-4 py-3 text-right text-xs font-semibold text-gray-400 uppercase tracking-wider">Acciones</th>
+            <tr class="border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+              <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Nombre</th>
+              <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Descripción</th>
+              <th class="px-4 py-3 text-right text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Acciones</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-gray-50">
-            <tr v-for="role in roles" :key="role.id" class="hover:bg-gray-50 transition-colors group">
+          <tbody class="divide-y divide-gray-50 dark:divide-gray-800">
+            <tr v-for="role in roles" :key="role.id" class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group">
               <td class="px-4 py-3">
-                <span class="font-medium text-gray-800 bg-gray-100 px-2.5 py-1 rounded-lg text-sm">
+                <span class="font-medium text-gray-800 dark:text-white bg-gray-100 dark:bg-gray-800 px-2.5 py-1 rounded-lg text-sm">
                   {{ role.name }}
                 </span>
               </td>
-              <td class="px-4 py-3 text-sm text-gray-500">{{ role.description || "—" }}</td>
+              <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{{ role.description || "—" }}</td>
               <td class="px-4 py-3 text-right">
                 <div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button @click="openPermissionsModal(role.id)"
-                    class="bg-emerald-500 text-white px-3 py-1.5 rounded-lg hover:bg-emerald-600 text-xs font-medium transition-colors">
+                    class="bg-emerald-500 dark:bg-emerald-600 text-white px-3 py-1.5 rounded-lg hover:bg-emerald-600 dark:hover:bg-emerald-500 text-xs font-medium transition-colors">
                     Permisos
                   </button>
-                  <button @click="openEditModal(role)"
-                    class="bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700 text-xs font-medium transition-colors">
+                  <BaseButton variant="primary" class="!px-3 !py-1.5 !text-xs" @click="openEditModal(role)">
                     Editar
-                  </button>
-                  <button @click="deleteRole(role.id)"
-                    class="text-red-500 border border-red-200 px-3 py-1.5 rounded-lg hover:bg-red-50 text-xs font-medium transition-colors">
+                  </BaseButton>
+                  <BaseButton variant="danger" class="!px-3 !py-1.5 !text-xs" @click="deleteRole(role.id)">
                     Eliminar
-                  </button>
+                  </BaseButton>
                 </div>
               </td>
             </tr>
             <tr v-if="roles.length === 0">
               <td colspan="3" class="px-4 py-12 text-center">
-                <ShieldCheckIcon class="w-8 h-8 mx-auto mb-2 text-gray-300" />
-                <p class="text-gray-400 text-sm">No hay roles creados.</p>
+                <ShieldCheckIcon class="w-8 h-8 mx-auto mb-2 text-gray-300 dark:text-gray-600" />
+                <p class="text-gray-400 dark:text-gray-500 text-sm">No hay roles creados.</p>
               </td>
             </tr>
           </tbody>
@@ -254,45 +246,44 @@ onMounted(() => {
 
     <!-- CARDS MOBILE -->
     <div class="md:hidden space-y-3">
-      <div v-for="role in roles" :key="role.id" class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
-        <div class="font-semibold text-gray-800 mb-1">{{ role.name }}</div>
-        <div class="text-sm text-gray-400 mb-3">{{ role.description || "Sin descripción" }}</div>
+      <div v-for="role in roles" :key="role.id" class="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 p-4">
+        <div class="font-semibold text-gray-800 dark:text-white mb-1">{{ role.name }}</div>
+        <div class="text-sm text-gray-400 dark:text-gray-500 mb-3">{{ role.description || "Sin descripción" }}</div>
         <div class="flex gap-2">
-          <button @click="openPermissionsModal(role.id)" class="flex-1 bg-emerald-500 text-white py-2 rounded-xl text-sm font-medium hover:bg-emerald-600 transition-colors">Permisos</button>
-          <button @click="openEditModal(role)" class="flex-1 bg-indigo-600 text-white py-2 rounded-xl text-sm font-medium hover:bg-indigo-700 transition-colors">Editar</button>
-          <button @click="deleteRole(role.id)" class="flex-1 bg-red-50 text-red-600 border border-red-200 py-2 rounded-xl text-sm font-medium hover:bg-red-100 transition-colors">Eliminar</button>
+          <button @click="openPermissionsModal(role.id)" class="flex-1 bg-emerald-500 dark:bg-emerald-600 text-white py-2 rounded-xl text-sm font-medium hover:bg-emerald-600 dark:hover:bg-emerald-500 transition-colors">Permisos</button>
+          <BaseButton variant="primary" class="flex-1" @click="openEditModal(role)">Editar</BaseButton>
+          <BaseButton variant="danger" class="flex-1" @click="deleteRole(role.id)">Eliminar</BaseButton>
         </div>
       </div>
     </div>
 
     <!-- MODAL EDITAR -->
     <div v-if="showEditModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4" @click="showEditModal = false">
-      <div class="bg-white rounded-3xl w-full max-w-md shadow-2xl" @click.stop>
-        <div class="flex justify-between items-center p-6 border-b border-gray-100">
-          <h2 class="text-lg font-bold text-gray-900">Editar Rol</h2>
-          <button @click="showEditModal = false" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 transition-colors">✕</button>
+      <div class="bg-white dark:bg-gray-900 rounded-3xl w-full max-w-md shadow-2xl" @click.stop>
+        <div class="flex justify-between items-center p-6 border-b border-gray-100 dark:border-gray-800">
+          <h2 class="text-lg font-bold text-gray-900 dark:text-white">Editar Rol</h2>
+          <button @click="showEditModal = false" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 dark:text-gray-500 transition-colors">✕</button>
         </div>
         <div class="p-6 space-y-4">
           <div>
-            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Nombre</label>
-            <input v-model="editForm.name" class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-400 focus:border-transparent outline-none" />
+            <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Nombre</label>
+            <BaseInput v-model="editForm.name" />
           </div>
           <div>
-            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Descripción</label>
-            <input v-model="editForm.description" class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-400 focus:border-transparent outline-none" />
+            <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Descripción</label>
+            <BaseInput v-model="editForm.description" />
           </div>
           <div class="flex gap-3 pt-1">
-            <button @click="updateRole" :disabled="actionLoading"
-              class="flex-1 bg-indigo-600 text-white py-2.5 rounded-xl hover:bg-indigo-700 disabled:opacity-50 font-medium text-sm transition-colors flex items-center justify-center gap-2">
+            <BaseButton variant="primary" class="flex-1 !py-2.5" :disabled="actionLoading" @click="updateRole">
               <svg v-if="actionLoading" class="animate-spin h-4 w-4" viewBox="0 0 24 24">
                 <circle cx="12" cy="12" r="10" stroke="white" stroke-width="4" fill="none" class="opacity-25"/>
                 <path fill="white" d="M4 12a8 8 0 018-8v8z" class="opacity-75"/>
               </svg>
               Guardar
-            </button>
-            <button @click="showEditModal = false" class="flex-1 bg-gray-100 text-gray-700 py-2.5 rounded-xl hover:bg-gray-200 font-medium text-sm transition-colors">
+            </BaseButton>
+            <BaseButton variant="secondary" class="flex-1 !py-2.5" @click="showEditModal = false">
               Cancelar
-            </button>
+            </BaseButton>
           </div>
         </div>
       </div>
@@ -300,26 +291,22 @@ onMounted(() => {
 
     <!-- MODAL PERMISOS -->
     <div v-if="showPermissionsModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4" @click="showPermissionsModal = false">
-      <div class="bg-white rounded-3xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl" @click.stop>
+      <div class="bg-white dark:bg-gray-900 rounded-3xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl" @click.stop>
 
-        <div class="flex justify-between items-center p-6 border-b border-gray-100 shrink-0">
+        <div class="flex justify-between items-center p-6 border-b border-gray-100 dark:border-gray-800 shrink-0">
           <div>
-            <h2 class="text-lg font-bold text-gray-900">Permisos del Rol</h2>
-            <p class="text-xs text-gray-400 mt-0.5">
-              <span class="font-medium text-gray-600">{{ selectedRole?.name }}</span>
+            <h2 class="text-lg font-bold text-gray-900 dark:text-white">Permisos del Rol</h2>
+            <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+              <span class="font-medium text-gray-600 dark:text-gray-300">{{ selectedRole?.name }}</span>
               · {{ rolePermissions.length }} asignados
             </p>
           </div>
-          <button @click="showPermissionsModal = false" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 transition-colors">✕</button>
+          <button @click="showPermissionsModal = false" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 dark:text-gray-500 transition-colors">✕</button>
         </div>
 
         <!-- BUSCADOR -->
-        <div class="px-6 py-3 border-b border-gray-100 shrink-0">
-          <input
-            v-model="searchPerm"
-            placeholder="Buscar permiso..."
-            class="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-400 focus:border-transparent outline-none"
-          />
+        <div class="px-6 py-3 border-b border-gray-100 dark:border-gray-800 shrink-0">
+          <BaseInput v-model="searchPerm" placeholder="Buscar permiso..." />
         </div>
 
         <!-- LISTA -->
@@ -327,38 +314,40 @@ onMounted(() => {
           <div
             v-for="p in filteredPermissions" :key="p.id"
             class="flex justify-between items-center p-3 rounded-xl border transition-colors"
-            :class="hasPermission(p.id) ? 'bg-emerald-50 border-emerald-200' : 'bg-gray-50 border-gray-100 hover:bg-gray-100'"
+            :class="hasPermission(p.id) ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900' : 'bg-gray-50 dark:bg-gray-800/50 border-gray-100 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-800'"
           >
             <div class="min-w-0 flex-1 pr-3">
-              <div class="text-sm font-medium text-gray-800 truncate">{{ p.name }}</div>
-              <div class="text-xs text-gray-400 truncate">{{ p.description }}</div>
+              <div class="text-sm font-medium text-gray-800 dark:text-white truncate">{{ p.name }}</div>
+              <div class="text-xs text-gray-400 dark:text-gray-500 truncate">{{ p.description }}</div>
             </div>
-            <button
+            <BaseButton
               v-if="!hasPermission(p.id)"
-              @click="assignPermission(p.id)"
+              variant="primary"
+              class="!px-3 !py-1.5 !text-xs shrink-0"
               :disabled="actionLoading"
-              class="bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700 text-xs font-medium transition-colors disabled:opacity-50 shrink-0"
+              @click="assignPermission(p.id)"
             >
               Asignar
-            </button>
-            <button
+            </BaseButton>
+            <BaseButton
               v-else
-              @click="removePermission(p.id)"
+              variant="danger"
+              class="!px-3 !py-1.5 !text-xs shrink-0 !bg-white dark:!bg-gray-900"
               :disabled="actionLoading"
-              class="bg-white text-red-500 border border-red-200 px-3 py-1.5 rounded-lg hover:bg-red-50 text-xs font-medium transition-colors disabled:opacity-50 shrink-0"
+              @click="removePermission(p.id)"
             >
               Quitar
-            </button>
+            </BaseButton>
           </div>
-          <div v-if="filteredPermissions.length === 0" class="text-center py-8 text-gray-400 text-sm italic">
+          <div v-if="filteredPermissions.length === 0" class="text-center py-8 text-gray-400 dark:text-gray-500 text-sm italic">
             No se encontraron permisos.
           </div>
         </div>
 
-        <div class="p-4 border-t border-gray-100 shrink-0">
-          <button @click="showPermissionsModal = false" class="w-full bg-gray-100 text-gray-700 py-2.5 rounded-xl hover:bg-gray-200 font-medium text-sm transition-colors">
+        <div class="p-4 border-t border-gray-100 dark:border-gray-800 shrink-0">
+          <BaseButton variant="secondary" class="w-full !py-2.5" @click="showPermissionsModal = false">
             Cerrar
-          </button>
+          </BaseButton>
         </div>
 
       </div>

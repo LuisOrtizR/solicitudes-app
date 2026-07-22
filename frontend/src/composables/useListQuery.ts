@@ -1,4 +1,4 @@
-import { ref, reactive, computed, watch, type Ref } from "vue";
+import { ref, reactive, computed, watch, onUnmounted, type Ref } from "vue";
 import { isAxiosError } from "axios";
 
 export interface ListQueryResult<T> {
@@ -14,7 +14,7 @@ export interface FilterChip {
   label: string;
 }
 
-export function useListQuery<T, TFilters extends Record<string, string | undefined>>(
+export function useListQuery<T, TFilters extends object>(
   fetchFn: (params: { page: number; limit: number; search?: string } & TFilters) => Promise<ListQueryResult<T>>,
   options: {
     initialFilters: TFilters;
@@ -104,6 +104,10 @@ export function useListQuery<T, TFilters extends Record<string, string | undefin
     fetchNow,
     { deep: true }
   );
+
+  onUnmounted(() => {
+    if (debounceTimer) clearTimeout(debounceTimer);
+  });
 
   return {
     page,

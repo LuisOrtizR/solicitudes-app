@@ -18,7 +18,7 @@ const listUsersQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(10),
   search: z.string().trim().max(200).optional(),
   role: z.string().min(1).max(50).optional(),
-  is_active: z.coerce.boolean().optional(),
+  is_active: z.enum(['true', 'false']).transform((v) => v === 'true').optional(),
   sort: z.enum(['name', 'email', 'created_at']).default('created_at'),
   order: z.enum(['ASC', 'DESC']).default('DESC'),
 });

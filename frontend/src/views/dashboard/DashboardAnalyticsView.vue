@@ -8,6 +8,7 @@ import CategoryBarChart from "@/components/analytics/CategoryBarChart.vue";
 import MttrChart from "@/components/analytics/MttrChart.vue";
 import AgentWorkloadTable from "@/components/analytics/AgentWorkloadTable.vue";
 import TrendLineChart from "@/components/analytics/TrendLineChart.vue";
+import BaseButton from "@/components/ui/BaseButton.vue";
 
 const store = useAnalyticsStore();
 
@@ -30,28 +31,23 @@ onMounted(() => {
   <div class="space-y-6">
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
       <div>
-        <h1 class="text-2xl font-bold text-gray-900 tracking-tight">Analítica</h1>
-        <p class="text-sm text-gray-400 mt-0.5">Indicadores de gestión de solicitudes</p>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">Analítica</h1>
+        <p class="text-sm text-gray-400 dark:text-gray-500 mt-0.5">Indicadores de gestión de solicitudes</p>
       </div>
 
       <div class="flex items-center gap-2">
         <input
           v-model="dateFrom"
           type="date"
-          class="text-sm border border-gray-200 rounded-lg px-3 py-1.5 bg-white outline-none focus:ring-2 focus:ring-indigo-400"
+          class="text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800 dark:text-white outline-none focus:ring-2 focus:ring-primary-400"
         />
-        <span class="text-gray-400 text-sm">a</span>
+        <span class="text-gray-400 dark:text-gray-500 text-sm">a</span>
         <input
           v-model="dateTo"
           type="date"
-          class="text-sm border border-gray-200 rounded-lg px-3 py-1.5 bg-white outline-none focus:ring-2 focus:ring-indigo-400"
+          class="text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800 dark:text-white outline-none focus:ring-2 focus:ring-primary-400"
         />
-        <button
-          @click="applyFilters"
-          class="bg-indigo-600 text-white px-4 py-1.5 rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors"
-        >
-          Aplicar
-        </button>
+        <BaseButton variant="primary" class="!px-4 !py-1.5" @click="applyFilters">Aplicar</BaseButton>
       </div>
     </div>
 

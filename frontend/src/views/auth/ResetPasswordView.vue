@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from "vue";
 import { LockClosedIcon } from "@heroicons/vue/24/outline";
 import { useRouter, useRoute } from "vue-router";
 import { authApi } from "../../api/endpoints/auth.api";
+import BaseButton from "@/components/ui/BaseButton.vue";
 
 const password = ref("");
 const confirmPassword = ref("");
@@ -28,10 +29,10 @@ const passwordsMatch = computed(
 const isValid = computed(() => isPasswordValid.value && passwordsMatch.value);
 
 const inputClass = (valid: boolean, touched: boolean) => [
-  "w-full pl-10 pr-4 py-2.5 border rounded-lg outline-none transition text-sm sm:text-base",
+  "w-full pl-10 pr-4 py-2.5 border rounded-lg outline-none transition text-sm sm:text-base dark:bg-gray-800 dark:text-white",
   !touched || valid
-    ? "border-gray-300 focus:ring-2 focus:ring-purple-500"
-    : "border-red-400 focus:ring-2 focus:ring-red-400",
+    ? "border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-primary-500"
+    : "border-red-400 dark:border-red-500 focus:ring-2 focus:ring-red-400",
 ];
 
 const submit = async () => {
@@ -54,9 +55,9 @@ const submit = async () => {
 </script>
 
 <template>
-  <div class="min-h-screen flex items-center justify-center px-4 sm:px-6 py-8 bg-linear-to-br from-slate-900 via-blue-900 to-indigo-900">
-    <div class="w-full max-w-md bg-white shadow-2xl rounded-2xl p-6 sm:p-8">
-      <h1 class="text-xl sm:text-2xl font-bold text-center text-gray-800 mb-6">
+  <div class="min-h-screen flex items-center justify-center px-4 sm:px-6 py-8 bg-gray-50 dark:bg-gray-950">
+    <div class="w-full max-w-md bg-white dark:bg-gray-900 shadow-xl rounded-2xl border border-gray-200 dark:border-gray-800 p-6 sm:p-8">
+      <h1 class="text-xl sm:text-2xl font-bold text-center text-gray-900 dark:text-white mb-6">
         Nueva Contraseña
       </h1>
 
@@ -64,7 +65,7 @@ const submit = async () => {
         v-if="success"
         role="status"
         aria-live="polite"
-        class="mb-4 bg-green-100 border border-green-300 text-green-700 p-3 rounded-lg text-sm text-center"
+        class="mb-4 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900 text-emerald-700 dark:text-emerald-400 p-3 rounded-lg text-sm text-center"
       >
         ✔ Contraseña actualizada. Redirigiendo al login...
       </div>
@@ -73,14 +74,14 @@ const submit = async () => {
         v-if="error"
         role="alert"
         aria-live="assertive"
-        class="mb-4 bg-red-100 border border-red-300 text-red-600 p-3 rounded-lg text-sm"
+        class="mb-4 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 text-red-600 dark:text-red-400 p-3 rounded-lg text-sm"
       >
         {{ error }}
       </div>
 
       <form v-if="!success && token" @submit.prevent="submit" class="space-y-4" novalidate>
         <div class="relative">
-          <LockClosedIcon class="w-5 h-5 absolute left-3 top-3 text-gray-400" />
+          <LockClosedIcon class="w-5 h-5 absolute left-3 top-3 text-gray-400 dark:text-gray-500 z-10" />
           <input
             v-model="password"
             type="password"
@@ -91,7 +92,7 @@ const submit = async () => {
         </div>
 
         <div class="relative">
-          <LockClosedIcon class="w-5 h-5 absolute left-3 top-3 text-gray-400" />
+          <LockClosedIcon class="w-5 h-5 absolute left-3 top-3 text-gray-400 dark:text-gray-500 z-10" />
           <input
             v-model="confirmPassword"
             type="password"
@@ -101,26 +102,21 @@ const submit = async () => {
           />
         </div>
 
-        <p v-if="confirmPassword.length > 0 && !passwordsMatch" class="text-red-500 text-xs">
+        <p v-if="confirmPassword.length > 0 && !passwordsMatch" class="text-red-500 dark:text-red-400 text-xs">
           Las contraseñas no coinciden
         </p>
 
-        <button
-          :disabled="!isValid || loading"
-          class="w-full bg-purple-600 text-white py-2.5 rounded-lg font-medium
-                 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed
-                 flex justify-center items-center gap-2 transition"
-        >
+        <BaseButton variant="primary" :disabled="!isValid || loading" class="w-full py-2.5">
           <svg v-if="loading" class="animate-spin h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
             <circle cx="12" cy="12" r="10" stroke="white" stroke-width="4" fill="none" class="opacity-25" />
             <path fill="white" d="M4 12a8 8 0 018-8v8z" class="opacity-75" />
           </svg>
           {{ loading ? "Actualizando..." : "Restablecer contraseña" }}
-        </button>
+        </BaseButton>
       </form>
 
       <div v-if="!token" class="text-center mt-4">
-        <RouterLink to="/forgot-password" class="text-blue-600 hover:underline text-sm">
+        <RouterLink to="/forgot-password" class="text-primary-600 dark:text-primary-400 hover:underline text-sm">
           Solicitar nuevo enlace
         </RouterLink>
       </div>

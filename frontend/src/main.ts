@@ -1,9 +1,12 @@
 import './style.css'
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
+import { Chart, BarElement, LineElement, PointElement, ArcElement, CategoryScale, LinearScale, Tooltip, Legend } from 'chart.js'
 
 import App from './App.vue'
 import router from './router'
+
+Chart.register(BarElement, LineElement, PointElement, ArcElement, CategoryScale, LinearScale, Tooltip, Legend)
 
 const app = createApp(App)
 

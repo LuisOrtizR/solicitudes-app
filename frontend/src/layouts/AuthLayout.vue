@@ -74,7 +74,7 @@ const features = [
           <span class="text-gray-900 dark:text-white font-semibold text-base">TicketFlow</span>
         </div>
 
-        <router-view v-slot="{ Component }">
+        <router-view v-slot="{ Component, route }">
           <transition
             enter-active-class="transition duration-150 ease-out"
             enter-from-class="opacity-0 translate-x-2"
@@ -84,7 +84,7 @@ const features = [
             leave-to-class="opacity-0 -translate-x-2"
             mode="out-in"
           >
-            <component :is="Component" />
+            <component :is="Component" :key="route.path" />
           </transition>
         </router-view>
       </div>

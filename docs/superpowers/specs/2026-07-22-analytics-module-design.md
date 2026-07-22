@@ -26,6 +26,11 @@ TicketFlow es un sistema de solicitudes (backend Node/Express/PostgreSQL sin ORM
    - MTTR y SLA usan `resolved_at` (no `closed_at`) como marca de fin — una solicitud sin `resolved_at` no entra en estos cálculos aunque esté `closed`.
    - La migración hace `UPDATE requests SET category = 'otro' WHERE category IS NULL` explícito (además del `DEFAULT 'otro'` de la columna), para que las solicitudes reales preexistentes queden categorizadas de forma consistente con las de demo.
    - El guard de la ruta `/dashboard/analytics` en el frontend valida el permiso `analytics_read` (no un rol hardcodeado) — requiere extender `authGuard` con soporte para `meta.requiresPermission`.
+6. **Ajustes de la segunda revisión del spec** (antes de pasar a plan de implementación):
+   - **`agent-workload` no lleva filtro de rango de fechas.** Es una foto del presente ("¿cuánta carga tiene cada agente ahora mismo?"), no una métrica histórica — filtrar por `created_at` dejaría fuera solicitudes antiguas todavía abiertas y mostraría carga incompleta o en cero al filtrar por rangos recientes. Su único filtro es `deleted_at IS NULL AND status IN ('open', 'in_progress')`, sin `dateFrom`/`dateTo`.
+   - **Verificado exhaustivamente**: el único punto de escritura en `request_history` es `logRequestHistory` (`request.model.js`), invocado solo desde `request.service.js` (`_saveHistory`, llamada desde `updateExistingRequest`; y `deleteRequestById`), ambos alcanzables únicamente vía rutas Express con middleware `authenticate` — `changed_by` es siempre `req.user.id` de un JWT válido. El cron de purga (`request.purge.js`) hace `DELETE` físico y no escribe historial; el otro cron (`cleanup.job.js`) solo toca `password_resets`. No existe ningún job, trigger, ni proceso automático que escriba en `request_history`, así que `changed_by != r.user_id` como proxy de "primera respuesta humana" es válido sin filtros adicionales. Si en el futuro se agrega un proceso automático que escriba ahí, este filtro deberá revisarse.
+   - **El guard de ruta no debe tener bypass de `isAdmin`.** El `|| auth.isAdmin` original reintroducía el mismo antipatrón que motivó el cambio de rol a permiso: si el permiso `analytics_read` se retira del rol `admin` en el futuro (p. ej. para dárselo a un rol nuevo sin ser admin completo), el bypass dejaría entrar a los admins de todas formas sin que el guard llegara a consultar el permiso. Como el seed ya asigna `analytics_read` al rol `admin` explícitamente, el permiso solo cubre el caso — el guard queda `if (!auth.hasPermission(perm)) return next("/dashboard");`, sin `isAdmin` de respaldo.
+   - **`/trends` usa `generate_series` + `LEFT JOIN`, no un join directo entre las dos CTEs.** Un `INNER JOIN` (o incluso un `FULL OUTER JOIN` entre solo las dos CTEs de creados/resueltos) puede dejar huecos: un período sin nada de actividad no aparece en ninguna de las dos CTEs y desaparecería del resultado, rompiendo la continuidad del eje X del line chart. La query genera primero todos los períodos del rango con `generate_series(date_trunc(granularity, $dateFrom), date_trunc(granularity, $dateTo), interval)`, y hace `LEFT JOIN` de las dos CTEs de conteo contra esa serie completa, con `COALESCE(created, 0)` / `COALESCE(resolved, 0)`.
 
 ## Esquema — `backend/migrations/001_analytics.sql`
 
@@ -77,7 +82,8 @@ src/analytics/
 
 - Nuevo permiso `analytics_read` — agregado a `permissions.seed.js` y asignado al rol `admin` (ajuste al script de seed de admin o inserción directa). Middleware: `authenticate` + `authorize('analytics_read')` en las 7 rutas, montadas bajo `/api/analytics` en `src/routes/index.js`.
 - Validación común (Zod, `analytics.validator.js`): `dateFrom`, `dateTo` (ISO date, opcionales — si faltan, se usa un rango por defecto de los últimos 6 meses), `priority` (opcional, enum), y para `/trends` además `granularity` (`week`|`month`, default `week`).
-- Filtro base aplicado en **todas** las queries de `analytics.model.js`: `WHERE r.deleted_at IS NULL AND r.created_at BETWEEN $dateFrom AND $dateTo [AND r.priority = $priority]`.
+- Filtro base aplicado en las queries históricas de `analytics.model.js` (SLA, MTTR, tendencias, distribución de estado, distribución de categoría, primera respuesta): `WHERE r.deleted_at IS NULL AND r.created_at BETWEEN $dateFrom AND $dateTo [AND r.priority = $priority]`.
+- **`agent-workload` es la única excepción**: no lleva `created_at BETWEEN`, solo `WHERE r.deleted_at IS NULL AND r.status IN ('open', 'in_progress')` — es una foto del presente, no un histórico (ver ajuste 6 más abajo).
 - Para MTTR y SLA, filtro adicional: `AND r.status != 'rejected' AND r.resolved_at IS NOT NULL`.
 
 ### Los 7 endpoints (bajo `/api/analytics`, todos `GET`, todos requieren `analytics_read`)
@@ -85,8 +91,8 @@ src/analytics/
 1. **`/sla`** → `{ withinSla, breachedSla, withinSlaPercentage, totalResolved, rejectedPercentage, byPriority: [{priority, withinSlaPercentage, total}] }`. `withinSla` = `resolved_at <= created_at + (sla_rules.hours_to_resolve || 'hours')::interval`. `rejectedPercentage` = rechazadas / total creadas en el rango (no solo resueltas).
 2. **`/mttr`** → `{ overallMttrHours, byPriority: [{priority, avgHours}], byAgent: [{agentId, agentName, avgHours, ticketsResolved}] }`. Cálculo vía `EXTRACT(EPOCH FROM (resolved_at - created_at))/3600` agregado en SQL (`AVG(...)`, `GROUP BY`).
 3. **`/status-distribution`** → `[{status, count, percentage}]`. Sin excluir `rejected` aquí (es una distribución de TODOS los estados actuales, rejected incluido) — solo excluye soft-deleted.
-4. **`/agent-workload`** → `[{agentId, agentName, openTickets, inProgressTickets, totalActive}]`, `status IN ('open','in_progress')`, ordenado por `totalActive DESC`.
-5. **`/trends`** → `[{period, created, resolved}]` vía `date_trunc(granularity, created_at)` / `date_trunc(granularity, resolved_at)`, dos CTEs unidas por período.
+4. **`/agent-workload`** → `[{agentId, agentName, openTickets, inProgressTickets, totalActive}]`, `status IN ('open','in_progress')`, **sin filtro de fecha** (foto del presente), ordenado por `totalActive DESC`.
+5. **`/trends`** → `[{period, created, resolved}]`. `generate_series($dateFrom truncado, $dateTo truncado, '1 week'|'1 month')` como columna base, `LEFT JOIN` contra una CTE de creados (`date_trunc(granularity, created_at)`) y otra de resueltos (`date_trunc(granularity, resolved_at)`), con `COALESCE(created, 0)` / `COALESCE(resolved, 0)` — así ningún período del rango desaparece del resultado aunque no haya actividad.
 6. **`/category-distribution`** → `[{category, count, percentage}]`.
 7. **`/first-response-time`** → `{ overallAvgHours, byPriority: [{priority, avgHours}] }`. Subquery: `MIN(rh.created_at) FROM request_history rh WHERE rh.request_id = r.id AND rh.changed_by != r.user_id`, promediado contra `r.created_at`.
 
@@ -109,11 +115,13 @@ Corre explícitamente contra PostgreSQL local (reconecto el `.env` del backend a
 ```ts
 if (to.meta.requiresPermission) {
   const perm = to.meta.requiresPermission as string;
-  if (!auth.hasPermission(perm) && !auth.isAdmin) {
+  if (!auth.hasPermission(perm)) {
     return next("/dashboard");
   }
 }
 ```
+
+Sin bypass de `isAdmin`: el permiso `analytics_read` ya está asignado al rol `admin` desde el seed, así que el chequeo de permiso por sí solo cubre el caso sin anular el sistema de permisos si cambia a futuro.
 
 Ruta nueva: `{ path: "analytics", name: "analytics", component: () => import(".../DashboardAnalyticsView.vue"), meta: { requiresPermission: "analytics_read" } }`.
 
@@ -138,7 +146,7 @@ src/components/analytics/FirstResponseCard.vue
 - Se instala `vue-chartjs` + `chart.js`.
 - `analytics.store.ts`: un estado independiente por métrica (`sla`, `mttr`, `statusDistribution`, `agentWorkload`, `trends`, `categoryDistribution`, `firstResponseTime`), cada uno con su propio `loading`/`error`. Acción `fetchAll(filters)` vía `Promise.allSettled`. Tipado completo, sin `any`.
 - `DashboardAnalyticsView.vue`: grid `grid-cols-1 lg:grid-cols-3` (Tailwind), filtro superior de rango de fechas que dispara `fetchAll`, skeleton individual por card mientras cada métrica carga, mensaje de estado vacío por card si no hay datos en el rango.
-- Sidebar (`DashboardLayout.vue`): nuevo link "Analítica" con `ChartBarIcon`, visible si `auth.hasPermission('analytics_read') || auth.isAdmin` (mismo patrón que `canViewUsers`/`canViewRoles`), acento índigo consistente con el rediseño reciente.
+- Sidebar (`DashboardLayout.vue`): nuevo link "Analítica" con `ChartBarIcon`, visible si `auth.hasPermission('analytics_read')` — **sin** `|| auth.isAdmin`, a diferencia de `canViewUsers`/`canViewRoles`/`canViewPermissions`. Es intencional: si el link usara el mismo bypass y el guard de ruta no lo tiene (ajuste 6), un admin al que en el futuro se le retire `analytics_read` vería el link en el sidebar pero sería rechazado al hacer clic — un enlace roto. Mantener sidebar y guard con el mismo criterio evita ese caso. Acento índigo consistente con el rediseño reciente.
 
 ## Fuera de alcance (explícito, no ambiguo)
 

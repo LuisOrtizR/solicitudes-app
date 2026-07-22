@@ -2,6 +2,8 @@
 import { ref, onMounted, computed } from "vue";
 import { permissionApi, type Permission } from "@/api/endpoints/permission.api";
 import { ExclamationTriangleIcon, InboxIcon } from "@heroicons/vue/24/outline";
+import BaseButton from "@/components/ui/BaseButton.vue";
+import BaseInput from "@/components/ui/BaseInput.vue";
 
 const permissions = ref<Permission[]>([]);
 const loading = ref(false);
@@ -111,35 +113,30 @@ onMounted(() => fetchPermissions());
     <!-- HEADER -->
     <div class="flex justify-between items-start">
       <div>
-        <h1 class="text-2xl font-bold text-gray-900 tracking-tight">
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">
           Gestión de Permisos
         </h1>
-        <p class="text-sm text-gray-400 mt-0.5">
+        <p class="text-sm text-gray-400 dark:text-gray-500 mt-0.5">
           Administración de permisos del sistema
         </p>
       </div>
 
       <div class="flex items-center gap-3">
-        <div class="flex items-center gap-2 bg-gray-100 px-4 py-2 rounded-xl">
-          <span class="text-xs text-gray-500">Total</span>
-          <span class="text-lg font-bold text-gray-800">
+        <div class="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 px-4 py-2 rounded-xl">
+          <span class="text-xs text-gray-500 dark:text-gray-400">Total</span>
+          <span class="text-lg font-bold text-gray-800 dark:text-white">
             {{ total }}
           </span>
         </div>
 
-        <button
-          @click="openCreate"
-          class="bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-indigo-700 transition-colors"
-        >
-          + Nuevo
-        </button>
+        <BaseButton variant="primary" @click="openCreate">+ Nuevo</BaseButton>
       </div>
     </div>
 
     <!-- ERROR -->
     <div
       v-if="error"
-      class="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm"
+      class="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 rounded-xl text-red-600 dark:text-red-400 text-sm"
     >
 <ExclamationTriangleIcon class="w-5 h-5 shrink-0" /> {{ error }}
     </div>
@@ -158,7 +155,7 @@ onMounted(() => fetchPermissions());
 
     <!-- TABLA -->
     <div v-else class="hidden md:block">
-      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden">
         <div class="overflow-x-auto">
           <table class="w-full text-sm table-fixed">
             <colgroup>
@@ -168,28 +165,28 @@ onMounted(() => fetchPermissions());
             </colgroup>
 
             <thead>
-              <tr class="border-b border-gray-100 bg-gray-50">
-                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
+              <tr class="border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
                   Nombre
                 </th>
-                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
                   Descripción
                 </th>
-                <th class="px-4 py-3 text-right text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                <th class="px-4 py-3 text-right text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
                   Acciones
                 </th>
               </tr>
             </thead>
 
-            <tbody class="divide-y divide-gray-50">
+            <tbody class="divide-y divide-gray-50 dark:divide-gray-800">
               <tr
                 v-for="p in permissions"
                 :key="p.id"
                 :class="[
                   'transition-colors group',
                   p.is_protected
-                    ? 'bg-gray-50 text-gray-400'
-                    : 'hover:bg-gray-50'
+                    ? 'bg-gray-50 dark:bg-gray-800/50 text-gray-400 dark:text-gray-500'
+                    : 'hover:bg-gray-50 dark:hover:bg-gray-800/50'
                 ]"
               >
                 <td class="px-4 py-3 min-w-0">
@@ -197,22 +194,22 @@ onMounted(() => fetchPermissions());
                     <span
                       class="font-mono text-xs px-2.5 py-1 rounded-lg whitespace-nowrap"
                       :class="p.is_protected
-                        ? 'bg-gray-200 text-gray-500'
-                        : 'bg-indigo-50 text-indigo-600'"
+                        ? 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
+                        : 'bg-primary-50 dark:bg-primary-500/10 text-primary-600 dark:text-primary-400'"
                     >
                       {{ p.name }}
                     </span>
 
                     <span
                       v-if="p.is_protected"
-                      class="text-[10px] uppercase font-semibold text-gray-400"
+                      class="text-[10px] uppercase font-semibold text-gray-400 dark:text-gray-500"
                     >
                       Sistema
                     </span>
                   </div>
                 </td>
 
-                <td class="px-4 py-3 text-sm text-gray-600 truncate">
+                <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-400 truncate">
                   {{ p.description || "— Sin descripción —" }}
                 </td>
 
@@ -221,27 +218,21 @@ onMounted(() => fetchPermissions());
                     v-if="!p.is_protected"
                     class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity"
                   >
-                    <button
-                      @click="openEdit(p)"
-                      class="bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-indigo-700 transition-colors"
-                    >
+                    <BaseButton variant="primary" class="!px-3 !py-1.5 !text-xs" @click="openEdit(p)">
                       Editar
-                    </button>
+                    </BaseButton>
 
-                    <button
-                      @click="deletePermission(p)"
-                      class="text-red-500 border border-red-200 px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-red-50 transition-colors"
-                    >
+                    <BaseButton variant="danger" class="!px-3 !py-1.5 !text-xs" @click="deletePermission(p)">
                       Eliminar
-                    </button>
+                    </BaseButton>
                   </div>
                 </td>
               </tr>
 
               <tr v-if="permissions.length === 0">
                 <td colspan="3" class="px-4 py-12 text-center">
-                  <InboxIcon class="w-8 h-8 mx-auto mb-2 text-gray-300" />
-                  <p class="text-gray-400 text-sm">
+                  <InboxIcon class="w-8 h-8 mx-auto mb-2 text-gray-300 dark:text-gray-600" />
+                  <p class="text-gray-400 dark:text-gray-500 text-sm">
                     No hay permisos registrados.
                   </p>
                 </td>
@@ -257,7 +248,7 @@ onMounted(() => fetchPermissions());
       v-if="totalPages > 1"
       class="flex justify-between items-center pt-4"
     >
-      <span class="text-sm text-gray-500">
+      <span class="text-sm text-gray-500 dark:text-gray-400">
         Página {{ currentPage }} de {{ totalPages }}
       </span>
 
@@ -269,8 +260,8 @@ onMounted(() => fetchPermissions());
           :class="[
             'px-3 py-1 rounded-lg text-sm transition-colors',
             page === currentPage
-              ? 'bg-indigo-600 text-white'
-              : 'border border-gray-200 hover:bg-gray-50'
+              ? 'bg-primary-600 dark:bg-primary-500 text-white'
+              : 'border border-gray-200 dark:border-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
           ]"
         >
           {{ page }}
@@ -285,16 +276,16 @@ onMounted(() => fetchPermissions());
       @click="showModal = false"
     >
       <div
-        class="bg-white rounded-3xl w-full max-w-md shadow-2xl"
+        class="bg-white dark:bg-gray-900 rounded-3xl w-full max-w-md shadow-2xl"
         @click.stop
       >
-        <div class="flex justify-between items-center p-6 border-b border-gray-100">
-          <h2 class="text-lg font-bold text-gray-900">
+        <div class="flex justify-between items-center p-6 border-b border-gray-100 dark:border-gray-800">
+          <h2 class="text-lg font-bold text-gray-900 dark:text-white">
             {{ isEditing ? "Editar Permiso" : "Nuevo Permiso" }}
           </h2>
           <button
             @click="showModal = false"
-            class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+            class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
           >
             ✕
           </button>
@@ -302,41 +293,27 @@ onMounted(() => fetchPermissions());
 
         <div class="p-6 space-y-4">
           <div>
-            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+            <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
               Nombre
             </label>
-            <input
-              v-model="form.name"
-              class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-indigo-400 focus:border-transparent outline-none"
-              placeholder="Ej: users_create"
-            />
+            <BaseInput v-model="form.name" placeholder="Ej: users_create" />
           </div>
 
           <div>
-            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+            <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
               Descripción
             </label>
-            <input
-              v-model="form.description"
-              class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-indigo-400 focus:border-transparent outline-none"
-              placeholder="Descripción del permiso"
-            />
+            <BaseInput v-model="form.description" placeholder="Descripción del permiso" />
           </div>
 
           <div class="flex gap-3 pt-2">
-            <button
-              @click="savePermission"
-              class="flex-1 bg-indigo-600 text-white py-2.5 rounded-xl hover:bg-indigo-700 font-medium text-sm transition-colors"
-            >
+            <BaseButton variant="primary" class="flex-1 !py-2.5" @click="savePermission">
               Guardar
-            </button>
+            </BaseButton>
 
-            <button
-              @click="showModal = false"
-              class="flex-1 bg-gray-100 text-gray-700 py-2.5 rounded-xl hover:bg-gray-200 font-medium text-sm transition-colors"
-            >
+            <BaseButton variant="secondary" class="flex-1 !py-2.5" @click="showModal = false">
               Cancelar
-            </button>
+            </BaseButton>
           </div>
         </div>
       </div>

@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import type { Component } from "vue";
 
+defineOptions({ inheritAttrs: false });
+
 const props = withDefaults(
   defineProps<{
     modelValue: string;
@@ -12,15 +14,12 @@ const props = withDefaults(
   }>(),
   { type: "text" }
 );
-
-defineEmits<{ (e: "update:modelValue", value: string): void }>();
+defineEmits<{ "update:modelValue": [value: string] }>();
 </script>
 
 <template>
   <div>
-    <label v-if="label" class="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1.5">
-      {{ label }}
-    </label>
+    <label v-if="label" class="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1.5">{{ label }}</label>
     <div class="relative">
       <component
         :is="icon"
@@ -29,12 +28,13 @@ defineEmits<{ (e: "update:modelValue", value: string): void }>();
       />
       <input
         :value="modelValue"
-        @input="$emit('update:modelValue', ($event.target as HTMLInputElement).value)"
         :type="type"
         :placeholder="placeholder"
         :autocomplete="autocomplete"
+        @input="$emit('update:modelValue', ($event.target as HTMLInputElement).value)"
+        v-bind="$attrs"
         :class="[
-          'w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500 rounded-lg py-2.5 pr-4 text-sm outline-none transition focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:focus:ring-primary-400',
+          'border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500 rounded-lg py-2.5 pr-4 text-sm outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:focus:ring-primary-400 w-full',
           icon ? 'pl-10' : 'pl-3',
         ]"
       />

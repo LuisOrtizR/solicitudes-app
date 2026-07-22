@@ -4,6 +4,7 @@ import { useAuthStore } from "@/stores/auth.store";
 import { useRouter } from "vue-router";
 import { UserIcon, EnvelopeIcon, LockClosedIcon } from "@heroicons/vue/24/outline";
 import BaseButton from "@/components/ui/BaseButton.vue";
+import BaseInput from "@/components/ui/BaseInput.vue";
 
 const name = ref("");
 const email = ref("");
@@ -48,86 +49,61 @@ const submit = async () => {
 </script>
 
 <template>
-  <div class="min-h-screen flex items-center justify-center px-4 sm:px-6 py-8 bg-gray-50 dark:bg-gray-950">
-    <div class="w-full max-w-md bg-white dark:bg-gray-900 shadow-xl rounded-2xl border border-gray-200 dark:border-gray-800 p-6 sm:p-8">
-      <div class="flex items-center justify-center gap-2.5 mb-6">
-        <div class="w-8 h-8 rounded-lg bg-primary-600 flex items-center justify-center">
-          <UserIcon class="w-4.5 h-4.5 text-white" />
-        </div>
-        <span class="text-gray-900 dark:text-white font-semibold text-base">TicketFlow</span>
-      </div>
+  <div>
+    <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-1.5">Crear Cuenta</h1>
+    <p class="text-gray-500 dark:text-slate-400 text-sm mb-8">Regístrate para empezar a gestionar tickets.</p>
 
-      <h1 class="text-xl sm:text-2xl font-bold text-center text-gray-900 dark:text-white mb-6">
-        Crear Cuenta
-      </h1>
-
-      <div
-        v-if="error"
-        role="alert"
-        aria-live="assertive"
-        class="mb-4 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 text-red-600 dark:text-red-400 p-3 rounded-lg text-sm"
-      >
-        {{ error }}
-      </div>
-
-      <form @submit.prevent="submit" class="space-y-4" novalidate>
-        <div class="relative">
-          <UserIcon class="w-5 h-5 absolute left-3 top-3 text-gray-400 dark:text-gray-500 z-10" />
-          <input
-            v-model="name"
-            type="text"
-            autocomplete="name"
-            placeholder="Nombre completo"
-            :class="[
-              'w-full pl-10 pr-4 py-2.5 border rounded-lg outline-none transition text-sm sm:text-base dark:bg-gray-800 dark:text-white',
-              inputBorderClass(isNameValid, name.length > 0),
-            ]"
-          />
-        </div>
-
-        <div class="relative">
-          <EnvelopeIcon class="w-5 h-5 absolute left-3 top-3 text-gray-400 dark:text-gray-500 z-10" />
-          <input
-            v-model="email"
-            type="email"
-            autocomplete="email"
-            placeholder="Correo electrónico"
-            :class="[
-              'w-full pl-10 pr-4 py-2.5 border rounded-lg outline-none transition text-sm sm:text-base dark:bg-gray-800 dark:text-white',
-              inputBorderClass(isEmailValid, email.length > 0),
-            ]"
-          />
-        </div>
-
-        <div class="relative">
-          <LockClosedIcon class="w-5 h-5 absolute left-3 top-3 text-gray-400 dark:text-gray-500 z-10" />
-          <input
-            v-model="password"
-            type="password"
-            autocomplete="new-password"
-            placeholder="Contraseña (mínimo 6 caracteres)"
-            :class="[
-              'w-full pl-10 pr-4 py-2.5 border rounded-lg outline-none transition text-sm sm:text-base dark:bg-gray-800 dark:text-white',
-              inputBorderClass(isPasswordValid, password.length > 0),
-            ]"
-          />
-        </div>
-
-        <BaseButton variant="primary" :disabled="!isValid || loading" class="w-full py-2.5">
-          <svg v-if="loading" class="animate-spin h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
-            <circle cx="12" cy="12" r="10" stroke="white" stroke-width="4" fill="none" class="opacity-25" />
-            <path fill="white" d="M4 12a8 8 0 018-8v8z" class="opacity-75" />
-          </svg>
-          {{ loading ? "Creando..." : "Registrarse" }}
-        </BaseButton>
-      </form>
-
-      <div class="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
-        ¿Ya tienes cuenta?
-        <RouterLink to="/login" class="text-primary-600 dark:text-primary-400 hover:underline font-medium">
-          Inicia sesión
-        </RouterLink>
-      </div>
+    <div
+      v-if="error"
+      role="alert"
+      aria-live="assertive"
+      class="mb-4 bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 text-sm p-3 rounded-lg border border-red-200 dark:border-red-500/20"
+    >
+      {{ error }}
     </div>
+
+    <form @submit.prevent="submit" class="space-y-4" novalidate>
+      <BaseInput
+        v-model="name"
+        type="text"
+        autocomplete="name"
+        placeholder="Nombre completo"
+        :icon="UserIcon"
+        :class="inputBorderClass(isNameValid, name.length > 0)"
+      />
+
+      <BaseInput
+        v-model="email"
+        type="email"
+        autocomplete="email"
+        placeholder="Correo electrónico"
+        :icon="EnvelopeIcon"
+        :class="inputBorderClass(isEmailValid, email.length > 0)"
+      />
+
+      <BaseInput
+        v-model="password"
+        type="password"
+        autocomplete="new-password"
+        placeholder="Contraseña (mínimo 6 caracteres)"
+        :icon="LockClosedIcon"
+        :class="inputBorderClass(isPasswordValid, password.length > 0)"
+      />
+
+      <BaseButton variant="primary" :disabled="!isValid || loading" class="w-full py-2.5">
+        <svg v-if="loading" class="animate-spin h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="10" stroke="white" stroke-width="4" fill="none" class="opacity-25" />
+          <path fill="white" d="M4 12a8 8 0 018-8v8z" class="opacity-75" />
+        </svg>
+        {{ loading ? "Creando..." : "Registrarse" }}
+      </BaseButton>
+    </form>
+
+    <p class="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
+      ¿Ya tienes cuenta?
+      <RouterLink to="/login" class="text-primary-600 dark:text-primary-400 hover:underline font-medium">
+        Inicia sesión
+      </RouterLink>
+    </p>
   </div>
 </template>

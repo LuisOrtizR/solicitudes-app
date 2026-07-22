@@ -3,6 +3,9 @@ import { ref, computed, onMounted } from "vue";
 import { requestApi } from "@/api/endpoints/request.api";
 import { useAuthStore } from "@/stores/auth.store";
 import type { Request } from "@/types/request.types";
+import StatusBadge from "@/components/ui/StatusBadge.vue";
+import PriorityBadge from "@/components/ui/PriorityBadge.vue";
+import BaseButton from "@/components/ui/BaseButton.vue";
 import {
   ExclamationTriangleIcon,
   CheckCircleIcon,
@@ -50,22 +53,6 @@ const openDetail = async (r: Request) => {
   }
 };
 
-const priorityConfig: Record<string, { color: string; label: string }> = {
-  low:    { color: "bg-slate-100 text-slate-600",         label: "Baja" },
-  medium: { color: "bg-sky-100 text-sky-700",             label: "Media" },
-  high:   { color: "bg-orange-100 text-orange-700",       label: "Alta" },
-  urgent: { color: "bg-rose-100 text-rose-700 font-bold", label: "🔥 Urgente" },
-};
-
-const statusConfig: Record<string, { color: string; dot: string; label: string }> = {
-  open:         { color: "bg-amber-50 text-amber-700 ring-1 ring-amber-200",       dot: "bg-amber-400",   label: "Abierta" },
-  in_progress:  { color: "bg-blue-50 text-blue-700 ring-1 ring-blue-200",          dot: "bg-blue-400",    label: "En Progreso" },
-  waiting_user: { color: "bg-violet-50 text-violet-700 ring-1 ring-violet-200",    dot: "bg-violet-400",  label: "Esp. Usuario" },
-  resolved:     { color: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200", dot: "bg-emerald-400", label: "Resuelta" },
-  closed:       { color: "bg-gray-100 text-gray-600 ring-1 ring-gray-200",         dot: "bg-gray-400",    label: "Cerrada" },
-  rejected:     { color: "bg-red-50 text-red-700 ring-1 ring-red-200",             dot: "bg-red-400",     label: "Rechazada" },
-};
-
 const daysUntilPurge = (deletedAt: string) => {
   const deleted = new Date(deletedAt).getTime();
   const now = Date.now();
@@ -81,20 +68,20 @@ onMounted(fetchDeleted);
 
     <div class="flex justify-between items-start">
       <div>
-        <h1 class="text-2xl font-bold text-gray-900 tracking-tight">
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">
           {{ isAdmin ? 'Solicitudes Eliminadas' : 'Mis Solicitudes Eliminadas' }}
         </h1>
-        <p class="text-sm text-gray-400 mt-0.5">
+        <p class="text-sm text-gray-400 dark:text-gray-500 mt-0.5">
           Registros pendientes de purga definitiva tras 15 días
         </p>
       </div>
-      <div class="flex items-center gap-2 bg-gray-100 px-4 py-2 rounded-xl">
-        <span class="text-xs text-gray-500">Total</span>
-        <span class="text-lg font-bold text-gray-800">{{ requests.length }}</span>
+      <div class="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 px-4 py-2 rounded-xl">
+        <span class="text-xs text-gray-500 dark:text-gray-400">Total</span>
+        <span class="text-lg font-bold text-gray-800 dark:text-white">{{ requests.length }}</span>
       </div>
     </div>
 
-    <div v-if="error" class="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">
+    <div v-if="error" class="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 rounded-xl text-red-600 dark:text-red-400 text-sm">
 <ExclamationTriangleIcon class="w-5 h-5 shrink-0" /> {{ error }}
     </div>
 
@@ -107,66 +94,61 @@ onMounted(fetchDeleted);
     </div>
 
     <div v-else class="hidden md:block">
-      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden">
         <div class="overflow-x-auto">
           <table class="w-full text-sm">
             <thead>
-              <tr class="border-b border-gray-100 bg-gray-50">
-                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase">Solicitud</th>
-                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase">Prioridad</th>
-                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase">Usuario</th>
-                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase">Motivo</th>
-                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase">Eliminada el</th>
-                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase">Purga en</th>
-                <th class="px-4 py-3 text-right text-xs font-semibold text-gray-400 uppercase">Acciones</th>
+              <tr class="border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase">Solicitud</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase">Prioridad</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase">Usuario</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase">Motivo</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase">Eliminada el</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase">Purga en</th>
+                <th class="px-4 py-3 text-right text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase">Acciones</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-gray-50">
-              <tr v-for="r in requests" :key="r.id" class="hover:bg-gray-50 transition-colors group">
+            <tbody class="divide-y divide-gray-50 dark:divide-gray-800">
+              <tr v-for="r in requests" :key="r.id" class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group">
                 <td class="px-4 py-3 min-w-0">
-                  <div class="font-medium text-gray-500 line-through truncate">{{ r.title }}</div>
-                  <div class="text-xs text-gray-400 truncate max-w-xs">{{ r.description }}</div>
+                  <div class="font-medium text-gray-500 dark:text-gray-400 line-through truncate">{{ r.title }}</div>
+                  <div class="text-xs text-gray-400 dark:text-gray-500 truncate max-w-xs">{{ r.description }}</div>
                 </td>
                 <td class="px-4 py-3">
-                  <span :class="priorityConfig[r.priority]?.color" class="px-2 py-0.5 rounded-lg text-xs">
-                    {{ priorityConfig[r.priority]?.label }}
-                  </span>
+                  <PriorityBadge :priority="r.priority" />
                 </td>
-                <td class="px-4 py-3 text-xs text-gray-500">{{ r.email }}</td>
+                <td class="px-4 py-3 text-xs text-gray-500 dark:text-gray-400">{{ r.email }}</td>
                 <td class="px-4 py-3 max-w-xs">
-                  <span class="text-xs text-red-600 bg-red-50 px-2 py-1 rounded-lg line-clamp-2">
+                  <span class="text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/40 px-2 py-1 rounded-lg line-clamp-2">
                     {{ r.deleted_reason || '—' }}
                   </span>
                 </td>
-                <td class="px-4 py-3 text-xs text-gray-400">
+                <td class="px-4 py-3 text-xs text-gray-400 dark:text-gray-500">
                   {{ new Date(r.deleted_at!).toLocaleString('es-ES') }}
                 </td>
                 <td class="px-4 py-3">
                   <span
                     class="text-xs px-2 py-1 rounded-lg font-medium"
                     :class="daysUntilPurge(r.deleted_at!) <= 3
-                      ? 'bg-red-100 text-red-700'
+                      ? 'bg-red-100 dark:bg-red-950/50 text-red-700 dark:text-red-400'
                       : daysUntilPurge(r.deleted_at!) <= 7
-                        ? 'bg-amber-100 text-amber-700'
-                        : 'bg-gray-100 text-gray-600'"
+                        ? 'bg-amber-100 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400'
+                        : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'"
                   >
                     {{ daysUntilPurge(r.deleted_at!) === 0 ? 'Hoy' : `${daysUntilPurge(r.deleted_at!)} día(s)` }}
                   </span>
                 </td>
                 <td class="px-4 py-3 text-right">
                   <div class="flex justify-end opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button
-                      @click="openDetail(r)"
-                      class="bg-indigo-600 text-white px-3 py-1 rounded-lg text-xs hover:bg-indigo-700"
-                    >
+                    <BaseButton variant="primary" class="!px-3 !py-1 !text-xs" @click="openDetail(r)">
                       Ver historial
-                    </button>
+                    </BaseButton>
                   </div>
                 </td>
               </tr>
               <tr v-if="requests.length === 0">
-                <td colspan="7" class="px-4 py-12 text-center text-gray-400">
-                  <CheckCircleIcon class="w-8 h-8 mx-auto mb-2 text-emerald-300" />
+                <td colspan="7" class="px-4 py-12 text-center text-gray-400 dark:text-gray-500">
+                  <CheckCircleIcon class="w-8 h-8 mx-auto mb-2 text-emerald-300 dark:text-emerald-700" />
                   No hay solicitudes pendientes de purga.
                 </td>
               </tr>
@@ -177,42 +159,37 @@ onMounted(fetchDeleted);
     </div>
 
     <div class="md:hidden space-y-3">
-      <div v-for="r in requests" :key="r.id" class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
+      <div v-for="r in requests" :key="r.id" class="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 p-4">
         <div class="flex justify-between items-start mb-2">
           <div class="flex-1 min-w-0 pr-2">
-            <div class="font-semibold text-gray-500 line-through truncate">{{ r.title }}</div>
-            <div class="text-xs text-gray-400 truncate">{{ r.description }}</div>
+            <div class="font-semibold text-gray-500 dark:text-gray-400 line-through truncate">{{ r.title }}</div>
+            <div class="text-xs text-gray-400 dark:text-gray-500 truncate">{{ r.description }}</div>
           </div>
           <span
             class="text-xs px-2 py-1 rounded-lg font-medium shrink-0"
             :class="daysUntilPurge(r.deleted_at!) <= 3
-              ? 'bg-red-100 text-red-700'
+              ? 'bg-red-100 dark:bg-red-950/50 text-red-700 dark:text-red-400'
               : daysUntilPurge(r.deleted_at!) <= 7
-                ? 'bg-amber-100 text-amber-700'
-                : 'bg-gray-100 text-gray-600'"
+                ? 'bg-amber-100 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400'
+                : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'"
           >
             {{ daysUntilPurge(r.deleted_at!) === 0 ? 'Hoy' : `${daysUntilPurge(r.deleted_at!)} día(s)` }}
           </span>
         </div>
         <div class="flex items-center gap-2 mb-2">
-          <span :class="priorityConfig[r.priority]?.color" class="px-2 py-0.5 rounded-lg text-xs">
-            {{ priorityConfig[r.priority]?.label }}
-          </span>
-          <span class="text-xs text-gray-400">{{ r.email }}</span>
+          <PriorityBadge :priority="r.priority" />
+          <span class="text-xs text-gray-400 dark:text-gray-500">{{ r.email }}</span>
         </div>
-        <div class="bg-red-50 rounded-xl px-3 py-2 mb-3">
-          <p class="text-xs text-gray-400 mb-0.5">Motivo de eliminación</p>
-          <p class="text-xs text-red-600">{{ r.deleted_reason || '—' }}</p>
+        <div class="bg-red-50 dark:bg-red-950/40 rounded-xl px-3 py-2 mb-3">
+          <p class="text-xs text-gray-400 dark:text-gray-500 mb-0.5">Motivo de eliminación</p>
+          <p class="text-xs text-red-600 dark:text-red-400">{{ r.deleted_reason || '—' }}</p>
         </div>
-        <p class="text-xs text-gray-400 mb-3">
+        <p class="text-xs text-gray-400 dark:text-gray-500 mb-3">
           Eliminada: {{ new Date(r.deleted_at!).toLocaleString('es-ES') }}
         </p>
-        <button
-          @click="openDetail(r)"
-          class="w-full bg-indigo-600 text-white py-2 rounded-xl text-sm hover:bg-indigo-700"
-        >
+        <BaseButton variant="primary" class="w-full" @click="openDetail(r)">
           Ver historial
-        </button>
+        </BaseButton>
       </div>
     </div>
 
@@ -222,61 +199,48 @@ onMounted(fetchDeleted);
       @click="showDetailModal = false"
     >
       <div
-        class="bg-white rounded-3xl w-full max-w-lg shadow-2xl p-6 max-h-[90vh] overflow-y-auto"
+        class="bg-white dark:bg-gray-900 rounded-3xl w-full max-w-lg shadow-2xl p-6 max-h-[90vh] overflow-y-auto"
         @click.stop
       >
         <div class="flex items-center gap-3 mb-5">
-          <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center text-red-600 shrink-0">
+          <div class="w-10 h-10 rounded-full bg-red-100 dark:bg-red-950/40 flex items-center justify-center text-red-600 dark:text-red-400 shrink-0">
             <TrashIcon class="w-5 h-5" />
           </div>
           <div class="min-w-0">
-            <h2 class="text-lg font-bold text-gray-900 leading-tight">Detalle de Solicitud Eliminada</h2>
-            <p class="text-xs text-gray-400 truncate">{{ detailRequest?.title }}</p>
+            <h2 class="text-lg font-bold text-gray-900 dark:text-white leading-tight">Detalle de Solicitud Eliminada</h2>
+            <p class="text-xs text-gray-400 dark:text-gray-500 truncate">{{ detailRequest?.title }}</p>
           </div>
         </div>
 
         <div class="space-y-3 text-sm">
           <div>
-            <p class="text-gray-500 text-xs mb-0.5">Título</p>
-            <p class="font-medium text-gray-700 line-through">{{ detailRequest?.title }}</p>
+            <p class="text-gray-500 dark:text-gray-400 text-xs mb-0.5">Título</p>
+            <p class="font-medium text-gray-700 dark:text-gray-300 line-through">{{ detailRequest?.title }}</p>
           </div>
           <div>
-            <p class="text-gray-500 text-xs mb-0.5">Descripción</p>
-            <p class="text-gray-700">{{ detailRequest?.description }}</p>
+            <p class="text-gray-500 dark:text-gray-400 text-xs mb-0.5">Descripción</p>
+            <p class="text-gray-700 dark:text-gray-300">{{ detailRequest?.description }}</p>
           </div>
           <div class="flex gap-2 flex-wrap">
-            <span
-              v-if="detailRequest?.status"
-              :class="statusConfig[detailRequest.status]?.color"
-              class="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs"
-            >
-              <span :class="statusConfig[detailRequest.status]?.dot" class="w-1.5 h-1.5 rounded-full"/>
-              {{ statusConfig[detailRequest.status]?.label }}
-            </span>
-            <span
-              v-if="detailRequest?.priority"
-              :class="priorityConfig[detailRequest.priority]?.color"
-              class="px-2 py-1 rounded-lg text-xs"
-            >
-              {{ priorityConfig[detailRequest.priority]?.label }}
-            </span>
+            <StatusBadge v-if="detailRequest?.status" :status="detailRequest.status" />
+            <PriorityBadge v-if="detailRequest?.priority" :priority="detailRequest.priority" />
           </div>
           <div>
-            <p class="text-gray-500 text-xs mb-0.5">Usuario</p>
-            <p class="text-gray-700">{{ detailRequest?.email }}</p>
+            <p class="text-gray-500 dark:text-gray-400 text-xs mb-0.5">Usuario</p>
+            <p class="text-gray-700 dark:text-gray-300">{{ detailRequest?.email }}</p>
           </div>
-          <div v-if="detailRequest?.resolution" class="bg-emerald-50 border border-emerald-200 rounded-xl p-3">
-            <p class="text-emerald-800 font-semibold text-xs mb-1 flex items-center gap-1.5">
+          <div v-if="detailRequest?.resolution" class="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900 rounded-xl p-3">
+            <p class="text-emerald-800 dark:text-emerald-400 font-semibold text-xs mb-1 flex items-center gap-1.5">
               <CheckCircleIcon class="w-3.5 h-3.5" /> Resolución
             </p>
-            <p class="text-emerald-700 text-sm">{{ detailRequest.resolution }}</p>
+            <p class="text-emerald-700 dark:text-emerald-300 text-sm">{{ detailRequest.resolution }}</p>
           </div>
-          <div class="bg-red-50 border border-red-200 rounded-xl p-3">
-            <p class="text-red-800 font-semibold text-xs mb-1 flex items-center gap-1.5">
+          <div class="bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 rounded-xl p-3">
+            <p class="text-red-800 dark:text-red-400 font-semibold text-xs mb-1 flex items-center gap-1.5">
               <TrashIcon class="w-3.5 h-3.5" /> Motivo de eliminación
             </p>
-            <p class="text-red-700 text-sm">{{ detailRequest?.deleted_reason || '—' }}</p>
-            <p class="text-red-400 text-xs mt-1">
+            <p class="text-red-700 dark:text-red-300 text-sm">{{ detailRequest?.deleted_reason || '—' }}</p>
+            <p class="text-red-400 dark:text-red-500 text-xs mt-1">
               Eliminada el {{ detailRequest?.deleted_at ? new Date(detailRequest.deleted_at).toLocaleString('es-ES') : '—' }}
               · Purga en {{ detailRequest?.deleted_at ? daysUntilPurge(detailRequest.deleted_at) : 0 }} día(s)
             </p>
@@ -284,13 +248,13 @@ onMounted(fetchDeleted);
         </div>
 
         <div class="mt-6">
-          <h3 class="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-1.5">
+          <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-1.5">
           <ClipboardDocumentListIcon class="w-4 h-4" /> Historial de cambios
         </h3>
-          <div v-if="loadingHistory" class="text-center text-gray-400 text-xs py-4">
+          <div v-if="loadingHistory" class="text-center text-gray-400 dark:text-gray-500 text-xs py-4">
             Cargando historial...
           </div>
-          <div v-else-if="historyList.length === 0" class="text-center text-gray-400 text-xs py-4">
+          <div v-else-if="historyList.length === 0" class="text-center text-gray-400 dark:text-gray-500 text-xs py-4">
             Sin cambios registrados.
           </div>
           <div v-else class="space-y-2">
@@ -298,30 +262,27 @@ onMounted(fetchDeleted);
               v-for="h in historyList"
               :key="h.id"
               class="rounded-xl px-3 py-2 text-xs"
-              :class="h.new_value === 'deleted' ? 'bg-red-50 border border-red-100' : 'bg-gray-50'"
+              :class="h.new_value === 'deleted' ? 'bg-red-50 dark:bg-red-950/40 border border-red-100 dark:border-red-900' : 'bg-gray-50 dark:bg-gray-800'"
             >
               <div class="flex justify-between items-center mb-0.5">
                 <span
                   class="font-medium"
-                  :class="h.new_value === 'deleted' ? 'text-red-700' : 'text-gray-700'"
+                  :class="h.new_value === 'deleted' ? 'text-red-700 dark:text-red-400' : 'text-gray-700 dark:text-gray-300'"
                 >
                   {{ h.changed_by_name }}
                 </span>
-                <span class="text-gray-400">{{ new Date(h.created_at).toLocaleString('es-ES') }}</span>
+                <span class="text-gray-400 dark:text-gray-500">{{ new Date(h.created_at).toLocaleString('es-ES') }}</span>
               </div>
-              <p :class="h.new_value === 'deleted' ? 'text-red-600' : 'text-gray-600'">
+              <p :class="h.new_value === 'deleted' ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-gray-400'">
                 {{ h.description }}
               </p>
             </div>
           </div>
         </div>
 
-        <button
-          @click="showDetailModal = false"
-          class="w-full mt-6 bg-gray-100 text-gray-700 py-2.5 rounded-xl hover:bg-gray-200 text-sm"
-        >
+        <BaseButton variant="secondary" class="w-full mt-6" @click="showDetailModal = false">
           Cerrar
-        </button>
+        </BaseButton>
       </div>
     </div>
 

@@ -1,11 +1,14 @@
 <script setup lang="ts">
-withDefaults(
+import type { Component } from "vue";
+
+const props = withDefaults(
   defineProps<{
     modelValue: string;
     type?: string;
     placeholder?: string;
     label?: string;
     autocomplete?: string;
+    icon?: Component;
   }>(),
   { type: "text" }
 );
@@ -18,15 +21,23 @@ defineEmits<{ (e: "update:modelValue", value: string): void }>();
     <label v-if="label" class="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1.5">
       {{ label }}
     </label>
-    <input
-      :value="modelValue"
-      @input="$emit('update:modelValue', ($event.target as HTMLInputElement).value)"
-      :type="type"
-      :placeholder="placeholder"
-      :autocomplete="autocomplete"
-      class="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white
-             dark:placeholder:text-gray-500 rounded-lg px-3 py-2.5 text-sm outline-none transition
-             focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:focus:ring-primary-400"
-    />
+    <div class="relative">
+      <component
+        :is="icon"
+        v-if="icon"
+        class="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 pointer-events-none"
+      />
+      <input
+        :value="modelValue"
+        @input="$emit('update:modelValue', ($event.target as HTMLInputElement).value)"
+        :type="type"
+        :placeholder="placeholder"
+        :autocomplete="autocomplete"
+        :class="[
+          'w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500 rounded-lg py-2.5 pr-4 text-sm outline-none transition focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:focus:ring-primary-400',
+          icon ? 'pl-10' : 'pl-3',
+        ]"
+      />
+    </div>
   </div>
 </template>

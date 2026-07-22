@@ -3,7 +3,7 @@ import type { Component } from "vue";
 
 defineOptions({ inheritAttrs: false });
 
-const props = withDefaults(
+withDefaults(
   defineProps<{
     modelValue: string;
     type?: string;
@@ -26,6 +26,7 @@ defineEmits<{ "update:modelValue": [value: string] }>();
         v-if="icon"
         class="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 pointer-events-none"
       />
+      <!-- Border color merges with any `class` a parent passes (e.g. red for invalid-touched fields) — relies on Tailwind's CSS output ordering. -->
       <input
         :value="modelValue"
         :type="type"
@@ -34,7 +35,7 @@ defineEmits<{ "update:modelValue": [value: string] }>();
         @input="$emit('update:modelValue', ($event.target as HTMLInputElement).value)"
         v-bind="$attrs"
         :class="[
-          'border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500 rounded-lg py-2.5 pr-4 text-sm outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:focus:ring-primary-400 w-full',
+          'border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500 rounded-lg transition py-2.5 pr-4 text-sm outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:focus:ring-primary-400 w-full',
           icon ? 'pl-10' : 'pl-3',
         ]"
       />

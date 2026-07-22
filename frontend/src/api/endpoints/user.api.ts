@@ -10,11 +10,23 @@ export interface User {
   created_at: string
 }
 
+export interface UserListParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+  role?: string;
+  is_active?: boolean;
+  sort?: string;
+  order?: "ASC" | "DESC";
+}
+
 export interface UserListResponse {
+  success: boolean;
   data: User[]
   total: number
   page: number
   limit: number
+  totalPages: number
 }
 
 export interface ApiResponse<T> {
@@ -23,8 +35,8 @@ export interface ApiResponse<T> {
 
 
 export const userApi = {
-  getAll() {
-    return api.get<UserListResponse>("/users")
+  getAll(params: UserListParams = {}) {
+    return api.get<UserListResponse>("/users", { params })
   },
 
   getOne(id: string) {

@@ -16,9 +16,26 @@ export interface UpdateRoleDTO {
   description?: string;
 }
 
+export interface RoleListParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+  sort?: string;
+  order?: "ASC" | "DESC";
+}
+
+export interface RoleListResponse {
+  success: boolean;
+  data: Role[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
 export const roleApi = {
-  getAll() {
-    return api.get<Role[]>("/roles");
+  getAll(params: RoleListParams = {}) {
+    return api.get<RoleListResponse>("/roles", { params });
   },
 
   create(data: CreateRoleDTO) {

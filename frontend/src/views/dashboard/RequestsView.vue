@@ -3,6 +3,9 @@ import { ref, computed, onMounted } from "vue";
 import { requestApi } from "@/api/endpoints/request.api";
 import type { Request, RequestStatus, RequestPriority } from "@/types/request.types";
 import { useAuthStore } from "@/stores/auth.store";
+import StatusBadge from "@/components/ui/StatusBadge.vue";
+import PriorityBadge from "@/components/ui/PriorityBadge.vue";
+import BaseButton from "@/components/ui/BaseButton.vue";
 import {
   ExclamationTriangleIcon,
   InboxIcon,
@@ -138,22 +141,6 @@ const openDetail = async (r: Request) => {
   }
 };
 
-const statusConfig: Record<string, { color: string; dot: string; label: string }> = {
-  open:         { color: "bg-amber-50 text-amber-700 ring-1 ring-amber-200",        dot: "bg-amber-400",   label: "Abierta" },
-  in_progress:  { color: "bg-blue-50 text-blue-700 ring-1 ring-blue-200",           dot: "bg-blue-400",    label: "En Progreso" },
-  waiting_user: { color: "bg-violet-50 text-violet-700 ring-1 ring-violet-200",     dot: "bg-violet-400",  label: "Esp. Usuario" },
-  resolved:     { color: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200",  dot: "bg-emerald-400", label: "Resuelta" },
-  closed:       { color: "bg-gray-100 text-gray-600 ring-1 ring-gray-200",          dot: "bg-gray-400",    label: "Cerrada" },
-  rejected:     { color: "bg-red-50 text-red-700 ring-1 ring-red-200",              dot: "bg-red-400",     label: "Rechazada" },
-};
-
-const priorityConfig: Record<string, { color: string; label: string }> = {
-  low:    { color: "bg-slate-100 text-slate-600",         label: "Baja" },
-  medium: { color: "bg-sky-100 text-sky-700",             label: "Media" },
-  high:   { color: "bg-orange-100 text-orange-700",       label: "Alta" },
-  urgent: { color: "bg-rose-100 text-rose-700 font-bold", label: "🔥 Urgente" },
-};
-
 onMounted(fetchRequests);
 </script>
 
@@ -162,28 +149,23 @@ onMounted(fetchRequests);
 
     <div class="flex justify-between items-start">
       <div>
-        <h1 class="text-2xl font-bold text-gray-900 tracking-tight">
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">
           {{ isAdmin ? "Todas las Solicitudes" : "Mis Solicitudes" }}
         </h1>
-        <p class="text-sm text-gray-400 mt-0.5">
+        <p class="text-sm text-gray-400 dark:text-gray-500 mt-0.5">
           {{ isAdmin ? "Vista administrativa global" : "Solo ves tus propias solicitudes" }}
         </p>
       </div>
       <div class="flex items-center gap-3">
-        <div class="flex items-center gap-2 bg-gray-100 px-4 py-2 rounded-xl">
-          <span class="text-xs text-gray-500">Total</span>
-          <span class="text-lg font-bold text-gray-800">{{ requests.length }}</span>
+        <div class="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 px-4 py-2 rounded-xl">
+          <span class="text-xs text-gray-500 dark:text-gray-400">Total</span>
+          <span class="text-lg font-bold text-gray-800 dark:text-white">{{ requests.length }}</span>
         </div>
-        <button
-          @click="showCreateModal = true"
-          class="bg-indigo-600 text-white px-4 py-2 rounded-xl hover:bg-indigo-700 text-sm font-medium transition-colors"
-        >
-          + Nueva
-        </button>
+        <BaseButton variant="primary" @click="showCreateModal = true">+ Nueva</BaseButton>
       </div>
     </div>
 
-    <div v-if="error" class="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">
+    <div v-if="error" class="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 rounded-xl text-red-600 dark:text-red-400 text-sm">
       <ExclamationTriangleIcon class="w-5 h-5 shrink-0" /> {{ error }}
     </div>
 
@@ -196,7 +178,7 @@ onMounted(fetchRequests);
     </div>
 
     <div v-else class="hidden md:block">
-      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden">
         <div class="overflow-x-auto">
           <table class="w-full text-sm table-fixed">
             <colgroup>
@@ -208,64 +190,61 @@ onMounted(fetchRequests);
               <col class="w-44"/>
             </colgroup>
             <thead>
-              <tr class="border-b border-gray-100 bg-gray-50">
-                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase">Solicitud</th>
-                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase">Prioridad</th>
-                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase">Estado</th>
-                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase">Usuario</th>
-                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase">Fecha</th>
-                <th class="px-4 py-3 text-right text-xs font-semibold text-gray-400 uppercase">Acciones</th>
+              <tr class="border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase">Solicitud</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase">Prioridad</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase">Estado</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase">Usuario</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase">Fecha</th>
+                <th class="px-4 py-3 text-right text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase">Acciones</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-gray-50">
-              <tr v-for="r in requests" :key="r.id" class="hover:bg-gray-50 transition-colors group">
+            <tbody class="divide-y divide-gray-50 dark:divide-gray-800">
+              <tr v-for="r in requests" :key="r.id" class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group">
                 <td class="px-4 py-3 min-w-0">
-                  <div class="font-medium text-gray-800 truncate">{{ r.title }}</div>
-                  <div class="text-xs text-gray-400 truncate">{{ r.description }}</div>
+                  <div class="font-medium text-gray-800 dark:text-white truncate">{{ r.title }}</div>
+                  <div class="text-xs text-gray-400 dark:text-gray-500 truncate">{{ r.description }}</div>
                 </td>
                 <td class="px-4 py-3">
-                  <span :class="priorityConfig[r.priority]?.color" class="px-2 py-0.5 rounded-lg text-xs">
-                    {{ priorityConfig[r.priority]?.label }}
-                  </span>
+                  <PriorityBadge :priority="r.priority" />
                 </td>
                 <td class="px-4 py-3">
-                  <span :class="statusConfig[r.status]?.color" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs">
-                    <span :class="statusConfig[r.status]?.dot" class="w-1.5 h-1.5 rounded-full"/>
-                    {{ statusConfig[r.status]?.label }}
-                  </span>
+                  <StatusBadge :status="r.status" />
                 </td>
-                <td class="px-4 py-3 text-xs text-gray-500">
+                <td class="px-4 py-3 text-xs text-gray-500 dark:text-gray-400">
                   {{ r.email }}
-                  <span v-if="isOwner(r)" class="ml-1 bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded text-xs">Tú</span>
+                  <span v-if="isOwner(r)" class="ml-1 bg-primary-100 dark:bg-primary-500/10 text-primary-700 dark:text-primary-400 px-1.5 py-0.5 rounded text-xs">Tú</span>
                 </td>
-                <td class="px-4 py-3 text-xs text-gray-400">
+                <td class="px-4 py-3 text-xs text-gray-400 dark:text-gray-500">
                   {{ new Date(r.created_at).toLocaleDateString("es-ES") }}
                 </td>
                 <td class="px-4 py-3 text-right">
                   <div class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button @click="openDetail(r)" class="bg-gray-600 text-white px-3 py-1 rounded-lg text-xs hover:bg-gray-700">
+                    <button @click="openDetail(r)" class="bg-gray-600 dark:bg-gray-700 text-white px-3 py-1 rounded-lg text-xs hover:bg-gray-700 dark:hover:bg-gray-600">
                       Ver
                     </button>
-                    <button
+                    <BaseButton
                       v-if="canEdit(r)"
+                      variant="primary"
+                      class="!px-3 !py-1 !text-xs"
                       @click="openEditModal(r)"
-                      class="bg-indigo-600 text-white px-3 py-1 rounded-lg text-xs hover:bg-indigo-700"
                     >
                       Editar
-                    </button>
-                    <button
+                    </BaseButton>
+                    <BaseButton
                       v-if="canDelete(r)"
+                      variant="danger"
+                      class="!px-3 !py-1 !text-xs"
                       @click="openDeleteModal(r)"
-                      class="text-red-500 border border-red-200 px-3 py-1 rounded-lg text-xs hover:bg-red-50"
                     >
                       Eliminar
-                    </button>
+                    </BaseButton>
                   </div>
                 </td>
               </tr>
               <tr v-if="requests.length === 0">
-                <td colspan="6" class="px-4 py-12 text-center text-gray-400">
-                  <InboxIcon class="w-8 h-8 mx-auto mb-2 text-gray-300" />
+                <td colspan="6" class="px-4 py-12 text-center text-gray-400 dark:text-gray-500">
+                  <InboxIcon class="w-8 h-8 mx-auto mb-2 text-gray-300 dark:text-gray-600" />
                   No hay solicitudes registradas.
                 </td>
               </tr>
@@ -276,157 +255,142 @@ onMounted(fetchRequests);
     </div>
 
     <div class="md:hidden space-y-3">
-      <div v-for="r in requests" :key="r.id" class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
+      <div v-for="r in requests" :key="r.id" class="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 p-4">
         <div class="flex justify-between items-start mb-2">
           <div class="flex-1 min-w-0 pr-2">
-            <div class="font-semibold text-gray-800 truncate">{{ r.title }}</div>
-            <div class="text-xs text-gray-400 truncate">{{ r.description }}</div>
+            <div class="font-semibold text-gray-800 dark:text-white truncate">{{ r.title }}</div>
+            <div class="text-xs text-gray-400 dark:text-gray-500 truncate">{{ r.description }}</div>
           </div>
-          <span :class="statusConfig[r.status]?.color" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs shrink-0">
-            <span :class="statusConfig[r.status]?.dot" class="w-1.5 h-1.5 rounded-full"/>
-            {{ statusConfig[r.status]?.label }}
-          </span>
+          <StatusBadge :status="r.status" class="shrink-0" />
         </div>
         <div class="flex items-center gap-2 mb-3">
-          <span :class="priorityConfig[r.priority]?.color" class="px-2 py-0.5 rounded-lg text-xs">
-            {{ priorityConfig[r.priority]?.label }}
-          </span>
-          <span class="text-xs text-gray-400">{{ r.email }}</span>
+          <PriorityBadge :priority="r.priority" />
+          <span class="text-xs text-gray-400 dark:text-gray-500">{{ r.email }}</span>
         </div>
         <div class="flex gap-2">
-          <button @click="openDetail(r)" class="flex-1 bg-gray-600 text-white py-2 rounded-xl text-sm">Ver</button>
-          <button v-if="canEdit(r)" @click="openEditModal(r)" class="flex-1 bg-indigo-600 text-white py-2 rounded-xl text-sm">Editar</button>
-          <button v-if="canDelete(r)" @click="openDeleteModal(r)" class="flex-1 border border-red-200 text-red-500 py-2 rounded-xl text-sm">Eliminar</button>
+          <button @click="openDetail(r)" class="flex-1 bg-gray-600 dark:bg-gray-700 text-white py-2 rounded-xl text-sm">Ver</button>
+          <BaseButton v-if="canEdit(r)" variant="primary" class="flex-1" @click="openEditModal(r)">Editar</BaseButton>
+          <BaseButton v-if="canDelete(r)" variant="danger" class="flex-1" @click="openDeleteModal(r)">Eliminar</BaseButton>
         </div>
       </div>
     </div>
 
     <div v-if="showCreateModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4" @click="showCreateModal = false">
-      <div class="bg-white rounded-3xl w-full max-w-lg shadow-2xl p-6" @click.stop>
-        <h2 class="text-lg font-bold mb-4">Nueva Solicitud</h2>
-        <input v-model="createForm.title" class="w-full px-3 py-2 border border-gray-200 rounded-xl mb-3" placeholder="Título"/>
-        <textarea v-model="createForm.description" rows="4" class="w-full px-3 py-2 border border-gray-200 rounded-xl mb-3" placeholder="Descripción"/>
-        <select v-model="createForm.priority" class="w-full px-3 py-2 border border-gray-200 rounded-xl mb-4">
+      <div class="bg-white dark:bg-gray-900 rounded-3xl w-full max-w-lg shadow-2xl p-6" @click.stop>
+        <h2 class="text-lg font-bold mb-4 text-gray-900 dark:text-white">Nueva Solicitud</h2>
+        <input v-model="createForm.title" class="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500 rounded-xl mb-3" placeholder="Título"/>
+        <textarea v-model="createForm.description" rows="4" class="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500 rounded-xl mb-3" placeholder="Descripción"/>
+        <select v-model="createForm.priority" class="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-white rounded-xl mb-4">
           <option value="low">Baja</option>
           <option value="medium">Media</option>
           <option value="high">Alta</option>
           <option value="urgent">Urgente</option>
         </select>
         <div class="flex gap-3">
-          <button @click="createRequest" class="flex-1 bg-indigo-600 text-white py-2.5 rounded-xl hover:bg-indigo-700">Crear</button>
-          <button @click="showCreateModal = false" class="flex-1 bg-gray-100 text-gray-700 py-2.5 rounded-xl hover:bg-gray-200">Cancelar</button>
+          <BaseButton variant="primary" class="flex-1 !py-2.5" @click="createRequest">Crear</BaseButton>
+          <BaseButton variant="secondary" class="flex-1 !py-2.5" @click="showCreateModal = false">Cancelar</BaseButton>
         </div>
       </div>
     </div>
 
     <div v-if="showEditModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4" @click="showEditModal = false">
-      <div class="bg-white rounded-3xl w-full max-w-lg shadow-2xl p-6" @click.stop>
-        <h2 class="text-lg font-bold mb-1">Editar Solicitud</h2>
-        <p class="text-xs text-amber-600 mb-4">⚠️ Solo puedes editar mientras la solicitud esté Abierta</p>
-        <input v-model="editForm.title" class="w-full px-3 py-2 border border-gray-200 rounded-xl mb-3" placeholder="Título"/>
-        <textarea v-model="editForm.description" rows="4" class="w-full px-3 py-2 border border-gray-200 rounded-xl mb-4" placeholder="Descripción"/>
+      <div class="bg-white dark:bg-gray-900 rounded-3xl w-full max-w-lg shadow-2xl p-6" @click.stop>
+        <h2 class="text-lg font-bold mb-1 text-gray-900 dark:text-white">Editar Solicitud</h2>
+        <p class="text-xs text-amber-600 dark:text-amber-400 mb-4">⚠️ Solo puedes editar mientras la solicitud esté Abierta</p>
+        <input v-model="editForm.title" class="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500 rounded-xl mb-3" placeholder="Título"/>
+        <textarea v-model="editForm.description" rows="4" class="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500 rounded-xl mb-4" placeholder="Descripción"/>
         <div class="flex gap-3">
-          <button @click="updateRequest" class="flex-1 bg-indigo-600 text-white py-2.5 rounded-xl hover:bg-indigo-700">Guardar</button>
-          <button @click="showEditModal = false" class="flex-1 bg-gray-100 text-gray-700 py-2.5 rounded-xl hover:bg-gray-200">Cancelar</button>
+          <BaseButton variant="primary" class="flex-1 !py-2.5" @click="updateRequest">Guardar</BaseButton>
+          <BaseButton variant="secondary" class="flex-1 !py-2.5" @click="showEditModal = false">Cancelar</BaseButton>
         </div>
       </div>
     </div>
 
     <div v-if="showDeleteModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4" @click="showDeleteModal = false">
-      <div class="bg-white rounded-3xl w-full max-w-md shadow-2xl p-6" @click.stop>
+      <div class="bg-white dark:bg-gray-900 rounded-3xl w-full max-w-md shadow-2xl p-6" @click.stop>
         <div class="flex items-center gap-3 mb-4">
-          <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center text-red-600">
+          <div class="w-10 h-10 rounded-full bg-red-100 dark:bg-red-950/40 flex items-center justify-center text-red-600 dark:text-red-400">
             <TrashIcon class="w-5 h-5" />
           </div>
           <div>
-            <h2 class="text-lg font-bold text-gray-900">Eliminar Solicitud</h2>
-            <p class="text-xs text-gray-400 truncate max-w-xs">{{ deletingRequest?.title }}</p>
+            <h2 class="text-lg font-bold text-gray-900 dark:text-white">Eliminar Solicitud</h2>
+            <p class="text-xs text-gray-400 dark:text-gray-500 truncate max-w-xs">{{ deletingRequest?.title }}</p>
           </div>
         </div>
-        <p class="text-sm text-gray-600 mb-4">
+        <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
           Esta acción no se puede deshacer. Por favor indica el motivo de la eliminación:
         </p>
         <textarea
           v-model="deleteReason"
           rows="3"
           placeholder="Ej: Solicitud duplicada, información incorrecta..."
-          class="w-full px-3 py-2 border rounded-xl text-sm resize-none mb-2"
-          :class="deleteError ? 'border-red-300' : 'border-gray-200'"
+          class="w-full px-3 py-2 border rounded-xl text-sm resize-none mb-2 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500"
+          :class="deleteError ? 'border-red-300 dark:border-red-800' : 'border-gray-200 dark:border-gray-700'"
         />
-        <p v-if="deleteError" class="text-red-500 text-xs mb-3 flex items-center gap-1">
+        <p v-if="deleteError" class="text-red-500 dark:text-red-400 text-xs mb-3 flex items-center gap-1">
           <ExclamationTriangleIcon class="w-3.5 h-3.5 shrink-0" /> {{ deleteError }}
         </p>
         <div class="flex gap-3 mt-2">
-          <button
-            @click="confirmDelete"
-            class="flex-1 bg-red-500 hover:bg-red-600 text-white py-2.5 rounded-xl text-sm font-medium transition-colors"
-          >
+          <BaseButton variant="danger-solid" class="flex-1 !py-2.5" @click="confirmDelete">
             Confirmar eliminación
-          </button>
-          <button
-            @click="showDeleteModal = false"
-            class="flex-1 bg-gray-100 text-gray-700 py-2.5 rounded-xl text-sm hover:bg-gray-200"
-          >
+          </BaseButton>
+          <BaseButton variant="secondary" class="flex-1 !py-2.5" @click="showDeleteModal = false">
             Cancelar
-          </button>
+          </BaseButton>
         </div>
       </div>
     </div>
 
     <div v-if="showDetailModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4" @click="showDetailModal = false">
-      <div class="bg-white rounded-3xl w-full max-w-lg shadow-2xl p-6 max-h-[90vh] overflow-y-auto" @click.stop>
-        <h2 class="text-lg font-bold mb-4">Detalle de Solicitud</h2>
+      <div class="bg-white dark:bg-gray-900 rounded-3xl w-full max-w-lg shadow-2xl p-6 max-h-[90vh] overflow-y-auto" @click.stop>
+        <h2 class="text-lg font-bold mb-4 text-gray-900 dark:text-white">Detalle de Solicitud</h2>
         <div class="space-y-3 text-sm">
           <div>
-            <p class="text-gray-500">Título</p>
-            <p class="font-medium">{{ detailRequest?.title }}</p>
+            <p class="text-gray-500 dark:text-gray-400">Título</p>
+            <p class="font-medium text-gray-900 dark:text-white">{{ detailRequest?.title }}</p>
           </div>
           <div>
-            <p class="text-gray-500">Descripción</p>
-            <p>{{ detailRequest?.description }}</p>
+            <p class="text-gray-500 dark:text-gray-400">Descripción</p>
+            <p class="text-gray-800 dark:text-gray-200">{{ detailRequest?.description }}</p>
           </div>
           <div class="flex gap-3">
-            <span :class="statusConfig[detailRequest?.status ?? 'open']?.color" class="px-2 py-1 rounded-lg text-xs">
-              {{ statusConfig[detailRequest?.status ?? 'open']?.label }}
-            </span>
-            <span :class="priorityConfig[detailRequest?.priority ?? 'medium']?.color" class="px-2 py-1 rounded-lg text-xs">
-              {{ priorityConfig[detailRequest?.priority ?? 'medium']?.label }}
-            </span>
+            <StatusBadge :status="detailRequest?.status ?? 'open'" />
+            <PriorityBadge :priority="detailRequest?.priority ?? 'medium'" />
           </div>
           <div>
-            <p class="text-gray-500">Creado por</p>
-            <p>{{ detailRequest?.email }}</p>
+            <p class="text-gray-500 dark:text-gray-400">Creado por</p>
+            <p class="text-gray-800 dark:text-gray-200">{{ detailRequest?.email }}</p>
           </div>
-          <div v-if="detailRequest?.resolution" class="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
-            <p class="text-emerald-800 font-semibold text-sm mb-1 flex items-center gap-1.5">
+          <div v-if="detailRequest?.resolution" class="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900 rounded-xl p-4">
+            <p class="text-emerald-800 dark:text-emerald-400 font-semibold text-sm mb-1 flex items-center gap-1.5">
               <CheckCircleIcon class="w-4 h-4" /> Resolución
             </p>
-            <p class="text-emerald-700 text-sm">{{ detailRequest?.resolution }}</p>
+            <p class="text-emerald-700 dark:text-emerald-300 text-sm">{{ detailRequest?.resolution }}</p>
           </div>
         </div>
 
         <div class="mt-6">
-          <h3 class="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-1.5">
+          <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-1.5">
             <ClipboardDocumentListIcon class="w-4 h-4" /> Historial de cambios
           </h3>
-          <div v-if="loadingHistory" class="text-center text-gray-400 text-xs py-4">Cargando historial...</div>
-          <div v-else-if="historyList.length === 0" class="text-center text-gray-400 text-xs py-4">
+          <div v-if="loadingHistory" class="text-center text-gray-400 dark:text-gray-500 text-xs py-4">Cargando historial...</div>
+          <div v-else-if="historyList.length === 0" class="text-center text-gray-400 dark:text-gray-500 text-xs py-4">
             Sin cambios registrados aún.
           </div>
           <div v-else class="space-y-2">
-            <div v-for="h in historyList" :key="h.id" class="bg-gray-50 rounded-xl px-3 py-2 text-xs">
+            <div v-for="h in historyList" :key="h.id" class="bg-gray-50 dark:bg-gray-800 rounded-xl px-3 py-2 text-xs">
               <div class="flex justify-between items-center mb-0.5">
-                <span class="font-medium text-gray-700">{{ h.changed_by_name }}</span>
-                <span class="text-gray-400">{{ new Date(h.created_at).toLocaleString('es-ES') }}</span>
+                <span class="font-medium text-gray-700 dark:text-gray-300">{{ h.changed_by_name }}</span>
+                <span class="text-gray-400 dark:text-gray-500">{{ new Date(h.created_at).toLocaleString('es-ES') }}</span>
               </div>
-              <p class="text-gray-600">{{ h.description }}</p>
+              <p class="text-gray-600 dark:text-gray-400">{{ h.description }}</p>
             </div>
           </div>
         </div>
 
-        <button @click="showDetailModal = false" class="w-full mt-6 bg-gray-100 text-gray-700 py-2.5 rounded-xl hover:bg-gray-200">
+        <BaseButton variant="secondary" class="w-full mt-6 !py-2.5" @click="showDetailModal = false">
           Cerrar
-        </button>
+        </BaseButton>
       </div>
     </div>
 

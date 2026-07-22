@@ -18,8 +18,8 @@ const create = asyncHandler(async (req, res) => {
 });
 
 const getAll = asyncHandler(async (req, res) => {
-  const roles = await getRolesService();
-  res.json(roles.rows);
+  const result = await getRolesService(req.query);
+  res.json({ success: true, ...result });
 });
 
 const getOne = asyncHandler(async (req, res) => {

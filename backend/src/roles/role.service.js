@@ -1,6 +1,7 @@
 const {
   createRole,
-  getRoles,
+  getRolesPaginated,
+  countRoles,
   getRoleById,
   getRoleByName,
   updateRole,
@@ -39,7 +40,21 @@ const createRoleService = async ({ name, description }) => {
   return createRole(name, description);
 };
 
-const getRolesService = () => getRoles();
+const getRolesService = async ({ page = 1, limit = 10, search, sort, order }) => {
+  const offset = (page - 1) * limit;
+
+  const data = await getRolesPaginated(limit, offset, search, sort, order);
+  const totalResult = await countRoles(search);
+  const total = Number(totalResult.rows[0].count);
+
+  return {
+    total,
+    page,
+    limit,
+    totalPages: Math.ceil(total / limit) || 1,
+    data: data.rows,
+  };
+};
 
 const getRoleService = (id) => getRoleById(id);
 

@@ -8,8 +8,36 @@ const createRole = (name, description) =>
     [name, description]
   );
 
-const getRoles = () =>
-  pool.query(`SELECT * FROM roles ORDER BY id ASC`);
+const allowedRoleSort = ['name', 'created_at'];
+
+const getRolesPaginated = (limit, offset, search, sort, order) => {
+  const values = [];
+  let where = '';
+  let idx = 1;
+
+  if (search) {
+    where = `WHERE name ILIKE $${idx++}`;
+    values.push(`%${search}%`);
+  }
+
+  const safeSort = allowedRoleSort.includes(sort) ? sort : 'created_at';
+  const safeOrder = order === 'ASC' ? 'ASC' : 'DESC';
+
+  values.push(limit, offset);
+
+  return pool.query(
+    `SELECT * FROM roles
+     ${where}
+     ORDER BY ${safeSort} ${safeOrder}
+     LIMIT $${idx++} OFFSET $${idx}`,
+    values
+  );
+};
+
+const countRoles = (search) =>
+  search
+    ? pool.query(`SELECT COUNT(*) FROM roles WHERE name ILIKE $1`, [`%${search}%`])
+    : pool.query(`SELECT COUNT(*) FROM roles`);
 
 const getRoleById = (id) =>
   pool.query(`SELECT * FROM roles WHERE id = $1`, [id]);
@@ -60,7 +88,8 @@ const getRolePermissions = (roleId) =>
 
 module.exports = {
   createRole,
-  getRoles,
+  getRolesPaginated,
+  countRoles,
   getRoleById,
   getRoleByName,
   updateRole,

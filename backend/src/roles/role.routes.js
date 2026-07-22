@@ -10,7 +10,8 @@ const {
   idParamSchema,
   createRoleSchema,
   updateRoleSchema,
-  assignPermissionSchema
+  assignPermissionSchema,
+  listRolesQuerySchema
 } = require('./role.validator');
 
 router.post(
@@ -25,6 +26,7 @@ router.get(
   '/',
   authenticate,
   authorize('view_roles'),
+  validate(listRolesQuerySchema, 'query'),
   controller.getAll
 );
 

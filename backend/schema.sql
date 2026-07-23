@@ -70,6 +70,21 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 --
+-- Name: areas; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.areas (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    nombre character varying(100) NOT NULL,
+    descripcion text,
+    activo boolean DEFAULT true NOT NULL,
+    created_at timestamp without time zone DEFAULT now() NOT NULL
+);
+
+
+ALTER TABLE public.areas OWNER TO postgres;
+
+--
 -- Name: password_resets; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -272,7 +287,8 @@ CREATE TABLE public.users (
     is_active boolean DEFAULT true,
     created_at timestamp without time zone DEFAULT now() NOT NULL,
     updated_at timestamp without time zone DEFAULT now() NOT NULL,
-    is_protected boolean DEFAULT false NOT NULL
+    is_protected boolean DEFAULT false NOT NULL,
+    area_id uuid
 );
 
 
@@ -283,6 +299,22 @@ ALTER TABLE public.users OWNER TO postgres;
 --
 
 ALTER TABLE ONLY public.password_resets ALTER COLUMN id SET DEFAULT nextval('public.password_resets_id_seq'::regclass);
+
+
+--
+-- Name: areas areas_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.areas
+    ADD CONSTRAINT areas_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: areas areas_nombre_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.areas
+    ADD CONSTRAINT areas_nombre_key UNIQUE (nombre);
 
 
 --
@@ -509,6 +541,13 @@ CREATE INDEX idx_users_email ON public.users USING btree (email);
 
 
 --
+-- Name: idx_users_area_id; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_users_area_id ON public.users USING btree (area_id);
+
+
+--
 -- Name: requests trg_requests_updated; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
@@ -608,6 +647,14 @@ ALTER TABLE ONLY public.user_roles
 
 ALTER TABLE ONLY public.user_roles
     ADD CONSTRAINT user_roles_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+
+--
+-- Name: users users_area_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT users_area_id_fkey FOREIGN KEY (area_id) REFERENCES public.areas(id) ON DELETE SET NULL;
 
 
 --

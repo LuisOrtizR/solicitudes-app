@@ -3,10 +3,14 @@ const pool = require('../shared/config/db');
 
 const permissions = [
   // USUARIOS
+  { name: 'users_create',       description: 'Crear nuevos usuarios',                    is_protected: true },
   { name: 'users_read',         description: 'Ver lista de usuarios y detalle',          is_protected: true },
   { name: 'users_update',       description: 'Editar datos de un usuario',               is_protected: true },
   { name: 'users_delete',       description: 'Eliminar un usuario',                      is_protected: true },
   { name: 'users_change_role',  description: 'Cambiar el rol de un usuario',             is_protected: true },
+
+  // AREAS
+  { name: 'areas_manage',       description: 'Gestionar areas del sistema',              is_protected: true },
 
   // ROLES
   { name: 'create_roles',       description: 'Crear nuevos roles',                       is_protected: true },

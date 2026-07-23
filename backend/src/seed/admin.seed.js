@@ -5,12 +5,14 @@ const pool = require('../shared/config/db');
 // Permisos base por rol del sistema
 const ROLE_PERMISSIONS = {
   admin: null, // null = todos los is_protected
+  admin_system: null, // null = todos los is_protected (mismo conjunto que admin)
   user: ['requests_create', 'requests_read']
 };
 
 async function seedSystemRoles(client) {
   const roles = [
     { name: 'admin', description: 'Administrador del sistema' },
+    { name: 'admin_system', description: 'Administrador del sistema (equivalente a admin, sin protección especial de cuenta)' },
     { name: 'user',  description: 'Usuario estándar del sistema' }
   ];
 
@@ -63,6 +65,14 @@ async function assignRolePermissions(client, roleId, roleName) {
   console.log(`✅ ${permsResult.rows.length} permisos asignados al rol "${roleName}"`);
 }
 
+async function seedAreas(client) {
+  await client.query(
+    `INSERT INTO areas (nombre, descripcion)
+     VALUES ('Service Desk IT', 'Área encargada de la gestión de tickets de soporte')
+     ON CONFLICT (nombre) DO NOTHING`
+  );
+}
+
 async function createAdmin(client, adminRoleId) {
   const email = 'admin@empresa.com';
 
@@ -107,6 +117,9 @@ async function run() {
 
     // 1️⃣ Crear roles del sistema
     const roleIds = await seedSystemRoles(client);
+
+    // 1.5️⃣ Crear áreas del sistema
+    await seedAreas(client);
 
     // 2️⃣ Asignar permisos a cada rol
     for (const roleName of Object.keys(ROLE_PERMISSIONS)) {

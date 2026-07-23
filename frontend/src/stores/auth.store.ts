@@ -1,7 +1,7 @@
   import { defineStore } from "pinia";
   import { authApi } from "@/api/endpoints/auth.api";
   import { userApi } from "@/api/endpoints/user.api";
-  import type { AuthState, RegisterDTO, LoginDTO } from "@/types/auth.types";
+  import type { AuthState, LoginDTO } from "@/types/auth.types";
   import {
     setAccessToken,
     setRefreshToken,
@@ -58,31 +58,6 @@
           setRefreshToken(refreshToken);
 
           // Cargar datos del usuario con roles y permisos
-          await this.fetchUser();
-
-        } catch (error) {
-          throw error;
-        } finally {
-          this.loading = false;
-        }
-      },
-
-      /* ================= REGISTER ================= */
-      async register(payload: RegisterDTO): Promise<void> {
-        this.loading = true;
-
-        try {
-          const response = await authApi.register(payload);
-
-          const { accessToken, refreshToken } = response.data.data;
-
-          this.accessToken = accessToken;
-          this.refreshToken = refreshToken;
-
-          setAccessToken(accessToken);
-          setRefreshToken(refreshToken);
-
-          // Cargar datos del usuario
           await this.fetchUser();
 
         } catch (error) {

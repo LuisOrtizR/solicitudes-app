@@ -2,17 +2,12 @@ import api from "@/api/axios";
 import type {
   AuthResponse,
   RefreshResponse,
-  RegisterDTO,
   LoginDTO,
 } from "@/types/auth.types";
 
 export const authApi = {
   login(payload: LoginDTO) {
     return api.post<AuthResponse>("/auth/login", payload);
-  },
-
-  register(payload: RegisterDTO) {
-    return api.post<AuthResponse>("/auth/register", payload);
   },
 
   refresh(refreshToken: string) {

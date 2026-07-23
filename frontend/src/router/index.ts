@@ -21,11 +21,6 @@ const router = createRouter({
           component: () => import("@/views/auth/LoginView.vue"),
         },
         {
-          path: "register",
-          name: "register",
-          component: () => import("@/views/auth/RegisterView.vue"),
-        },
-        {
           path: "forgot-password",
           name: "forgot-password",
           component: () => import("@/views/auth/ForgotPasswordView.vue"),
@@ -53,19 +48,25 @@ const router = createRouter({
           path: "users",
           name: "users",
           component: () => import("@/views/dashboard/UsersView.vue"),
-          meta: { requiresRole: 'admin' }, // Solo admin
+          meta: { requiresAnyRole: ['admin', 'admin_system'] },
         },
         {
           path: "roles",
           name: "roles",
           component: () => import("@/views/dashboard/RolesView.vue"),
-          meta: { requiresRole: 'admin' },
+          meta: { requiresAnyRole: ['admin', 'admin_system'] },
         },
         {
           path: "permissions",
           name: "permissions",
           component: () => import("@/views/dashboard/PermissionsView.vue"),
-          meta: { requiresRole: 'admin' },
+          meta: { requiresAnyRole: ['admin', 'admin_system'] },
+        },
+        {
+          path: "areas",
+          name: "areas",
+          component: () => import("@/views/dashboard/AreasView.vue"),
+          meta: { requiresPermission: "areas_manage" },
         },
         {
           path: "requests",
@@ -76,7 +77,7 @@ const router = createRouter({
           path: "manage-requests",
           name: "manage-requests",
           component: () => import("@/views/dashboard/ManageRequestsView.vue"),
-          meta: { requiresAnyRole: ['admin', 'supervisor'] }, // Admin o Supervisor
+          meta: { requiresPermission: "requests_read_all" },
         },
         {
           path: "deleted-requests",

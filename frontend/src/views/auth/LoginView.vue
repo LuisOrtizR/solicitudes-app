@@ -82,13 +82,6 @@ const handleAutofill = (payload: { email: string; password: string }) => {
       </button>
     </form>
 
-    <p class="mt-6 text-center text-sm text-gray-500 dark:text-slate-400">
-      ¿No tienes cuenta?
-      <RouterLink to="/register" class="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium transition">
-        Regístrate
-      </RouterLink>
-    </p>
-
     <DemoLoginBot @autofill="handleAutofill" />
   </div>
 </template>

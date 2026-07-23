@@ -8,17 +8,13 @@ export interface AuthUser {
   email: string;
   roles: string[];
   permissions: string[];
+  area_id?: string | null;
+  area_name?: string | null;
 }
 
 /* ======================================================
    AUTH REQUESTS
 ====================================================== */
-
-export interface RegisterDTO {
-  name: string;
-  email: string;
-  password: string;
-}
 
 export interface LoginDTO {
   email: string;

@@ -1,11 +1,11 @@
 const pool = require('../shared/config/db');
 
-const createRequest = (title, description, userId, priority = 'medium') =>
+const createRequest = (title, description, userId, priority = 'medium', category = 'otro') =>
   pool.query(
-    `INSERT INTO requests (title, description, user_id, priority, status)
-     VALUES ($1, $2, $3, $4, 'open')
+    `INSERT INTO requests (title, description, user_id, priority, category, status)
+     VALUES ($1, $2, $3, $4, $5, 'open')
      RETURNING *`,
-    [title, description, userId, priority]
+    [title, description, userId, priority, category]
   );
 
 const getRequestById = (id) =>
@@ -23,8 +23,9 @@ const updateRequestFull = (id, data) => {
     `description = COALESCE($2, description)`,
     `status      = COALESCE($3, status)`,
     `priority    = COALESCE($4, priority)`,
-    `assigned_to = COALESCE($5, assigned_to)`,
-    `resolution  = COALESCE($6, resolution)`,
+    `category    = COALESCE($5, category)`,
+    `assigned_to = COALESCE($6, assigned_to)`,
+    `resolution  = COALESCE($7, resolution)`,
     `updated_at  = NOW()`
   ];
 
@@ -34,13 +35,14 @@ const updateRequestFull = (id, data) => {
   return pool.query(
     `UPDATE requests
      SET ${fields.join(', ')}
-     WHERE id = $7
+     WHERE id = $8
      RETURNING *`,
     [
       data.title       ?? null,
       data.description ?? null,
       data.status      ?? null,
       data.priority    ?? null,
+      data.category    ?? null,
       data.assigned_to ?? null,
       data.resolution  ?? null,
       id

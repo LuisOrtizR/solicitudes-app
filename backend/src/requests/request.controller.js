@@ -16,6 +16,9 @@ const create = asyncHandler(async (req, res) => {
 });
 
 const getAll = asyncHandler(async (req, res) => {
+  if (!canManageAllRequests(req.user))
+    return res.status(403).json({ message: 'No autorizado: tu área no gestiona tickets' });
+
   const result = await listRequestsService({ ...req.query, scope: 'all' });
   res.json({ success: true, ...result });
 });
@@ -26,16 +29,20 @@ const getMine = asyncHandler(async (req, res) => {
   res.json({ success: true, ...result });
 });
 
+const canManageAllRequests = (user) => {
+  if (!user.permissions?.includes('requests_read_all')) return false;
+  if (user.roles.includes('admin') || user.roles.includes('admin_system')) return true;
+  return user.area_name === 'Service Desk IT';
+};
+
 const getDeleted = asyncHandler(async (req, res) => {
   const { assignedTo, ...rest } = req.query;
-  const isPrivileged = req.user.roles.includes('admin') || req.user.roles.includes('supervisor');
-  const scope = isPrivileged ? 'deleted' : 'deleted-mine';
+  const scope = canManageAllRequests(req.user) ? 'deleted' : 'deleted-mine';
   const result = await listRequestsService({ ...rest, scope, userId: req.user.id });
   res.json({ success: true, ...result });
 });
 
-const isPrivileged = (user) =>
-  user.roles.includes('admin') || user.roles.includes('supervisor');
+const isPrivileged = canManageAllRequests;
 
 const getOne = asyncHandler(async (req, res) => {
   const result = await getRequestById(req.params.id);

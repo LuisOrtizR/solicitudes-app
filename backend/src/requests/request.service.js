@@ -16,6 +16,12 @@ const AppError = require('../shared/utils/AppError');
 const LOCKED_STATUSES = ['closed', 'rejected'];
 const TRACKED_FIELDS  = ['title', 'description', 'status', 'priority', 'assigned_to', 'resolution'];
 
+const canManageAllRequests = (user) => {
+  if (!user.permissions?.includes('requests_read_all')) return false;
+  if (user.roles.includes('admin') || user.roles.includes('admin_system')) return true;
+  return user.area_name === 'Service Desk IT';
+};
+
 const FIELD_LABELS = {
   title: 'Título', description: 'Descripción', status: 'Estado',
   priority: 'Prioridad', assigned_to: 'Asignado a', resolution: 'Resolución'
@@ -62,7 +68,7 @@ const _saveHistory = async (requestId, changedBy, current, newData) => {
 };
 
 const createNewRequest = (data, userId) =>
-  createRequest(data.title, data.description, userId, data.priority || 'medium');
+  createRequest(data.title, data.description, userId, data.priority || 'medium', data.category || 'otro');
 
 const updateExistingRequest = async (id, data, user) => {
   const request = await getRequestById(id);
@@ -79,7 +85,7 @@ const updateExistingRequest = async (id, data, user) => {
       403
     );
 
-  const isPrivileged = user.roles.includes('admin') || user.roles.includes('supervisor');
+  const isPrivileged = canManageAllRequests(user);
 
   if (!isPrivileged) {
     if (current.user_id !== user.id)
@@ -107,7 +113,7 @@ const deleteRequestById = async (id, user, reason) => {
   if (current.deleted_at)
     throw new AppError('La solicitud ya fue eliminada', 400);
 
-  const isPrivileged = user.roles.includes('admin') || user.roles.includes('supervisor');
+  const isPrivileged = canManageAllRequests(user);
   const canDelete = isPrivileged || (current.user_id === user.id && current.status === 'open');
 
   if (!canDelete) return { rowCount: 0 };

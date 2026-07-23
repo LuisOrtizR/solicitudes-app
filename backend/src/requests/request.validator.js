@@ -2,11 +2,13 @@ const { z } = require('zod');
 
 const statusEnum = ['open', 'in_progress', 'waiting_user', 'resolved', 'closed', 'rejected'];
 const priorityEnum = ['low', 'medium', 'high', 'urgent'];
+const categoryEnum = ['soporte_tecnico', 'accesos_permisos', 'hardware', 'software', 'otro'];
 
 const createRequestSchema = z.object({
   title: z.string().min(3),
   description: z.string().min(5),
-  priority: z.enum(priorityEnum).optional().default('medium')
+  priority: z.enum(priorityEnum).optional().default('medium'),
+  category: z.enum(categoryEnum).optional().default('otro')
 });
 
 const updateRequestSchema = z.object({
@@ -14,8 +16,9 @@ const updateRequestSchema = z.object({
   description: z.string().min(5).optional(),
   status: z.enum(statusEnum).optional(),
   priority: z.enum(priorityEnum).optional(),
+  category: z.enum(categoryEnum).optional(),
   assigned_to: z.string().uuid().nullable().optional(),
-  resolution: z.string().optional() 
+  resolution: z.string().optional()
 });
 
 const deleteRequestSchema = z.object({

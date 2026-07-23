@@ -6,18 +6,18 @@ import { useAuthStore } from "@/stores/auth.store";
 import StatusBadge from "@/components/ui/StatusBadge.vue";
 import PriorityBadge from "@/components/ui/PriorityBadge.vue";
 import BaseButton from "@/components/ui/BaseButton.vue";
+import Pagination from "@/components/ui/Pagination.vue";
+import { useListQuery } from "@/composables/useListQuery";
 import {
   ExclamationTriangleIcon,
   InboxIcon,
   TrashIcon,
   ClipboardDocumentListIcon,
   CheckCircleIcon,
+  MagnifyingGlassIcon,
 } from "@heroicons/vue/24/outline";
 
 const authStore = useAuthStore();
-const requests = ref<Request[]>([]);
-const loading = ref(false);
-const error = ref<string | null>(null);
 
 const showCreateModal = ref(false);
 const showEditModal = ref(false);
@@ -54,20 +54,28 @@ const canEdit = (r: Request) =>
 const canDelete = (r: Request) =>
   isAdmin.value || (isOwner(r) && r.status === "open");
 
-const fetchRequests = async () => {
-  loading.value = true;
-  error.value = null;
-  try {
-    const res = isAdmin.value
-      ? await requestApi.getAll()
-      : await requestApi.getMine();
-    requests.value = res.data;
-  } catch (err: any) {
-    error.value = err.response?.data?.message || "Error cargando solicitudes";
-  } finally {
-    loading.value = false;
-  }
+interface RequestFilters {
+  status?: string;
+}
+
+const statusFilterLabels: Record<string, string> = {
+  open: "Abierta", in_progress: "En Progreso", waiting_user: "Esp. Usuario",
+  resolved: "Resuelta", closed: "Cerrada", rejected: "Rechazada",
 };
+
+const {
+  page, limit, search, filters, data: requests, total, totalPages,
+  loading, error, activeFilterChips, setFilter, clearFilter, refetch,
+} = useListQuery<Request, RequestFilters>(
+  async (params) => {
+    const res = isAdmin.value ? await requestApi.getAll(params) : await requestApi.getMine(params);
+    return res.data;
+  },
+  {
+    initialFilters: { status: undefined },
+    filterLabels: { status: (v) => `Estado: ${statusFilterLabels[v] ?? v}` },
+  }
+);
 
 const createRequest = async () => {
   if (!createForm.value.title || !createForm.value.description) return;
@@ -75,7 +83,7 @@ const createRequest = async () => {
     await requestApi.create(createForm.value);
     showCreateModal.value = false;
     createForm.value = { title: "", description: "", priority: "medium" };
-    fetchRequests();
+    refetch();
   } catch (err: any) {
     alert(err.response?.data?.message || "Error creando solicitud");
   }
@@ -96,7 +104,7 @@ const updateRequest = async () => {
       description: editForm.value.description,
     });
     showEditModal.value = false;
-    fetchRequests();
+    refetch();
   } catch (err: any) {
     alert(err.response?.data?.message || "Error actualizando solicitud");
   }
@@ -120,7 +128,7 @@ const confirmDelete = async () => {
     await requestApi.delete(deletingRequest.value.id, deleteReason.value);
     showDeleteModal.value = false;
     deletingRequest.value = null;
-    fetchRequests();
+    refetch();
   } catch (err: any) {
     deleteError.value = err.response?.data?.message || "Error eliminando";
   }
@@ -141,7 +149,7 @@ const openDetail = async (r: Request) => {
   }
 };
 
-onMounted(fetchRequests);
+onMounted(refetch);
 </script>
 
 <template>
@@ -159,10 +167,44 @@ onMounted(fetchRequests);
       <div class="flex items-center gap-3">
         <div class="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 px-4 py-2 rounded-xl">
           <span class="text-xs text-gray-500 dark:text-gray-400">Total</span>
-          <span class="text-lg font-bold text-gray-800 dark:text-white">{{ requests.length }}</span>
+          <span class="text-lg font-bold text-gray-800 dark:text-white">{{ total }}</span>
         </div>
         <BaseButton variant="primary" @click="showCreateModal = true">+ Nueva</BaseButton>
       </div>
+    </div>
+
+    <div class="flex flex-col sm:flex-row gap-3 sm:items-center">
+      <div class="relative flex-1 max-w-sm">
+        <MagnifyingGlassIcon class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 pointer-events-none" />
+        <input
+          v-model="search"
+          placeholder="Buscar solicitud..."
+          class="w-full pl-9 pr-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary-500"
+        />
+      </div>
+      <select
+        :value="filters.status ?? ''"
+        @change="setFilter('status', ($event.target as HTMLSelectElement).value || undefined)"
+        class="text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-primary-500"
+      >
+        <option value="">Todos los estados</option>
+        <option value="open">Abierta</option>
+        <option value="in_progress">En Progreso</option>
+        <option value="waiting_user">Esp. Usuario</option>
+        <option value="resolved">Resuelta</option>
+        <option value="closed">Cerrada</option>
+        <option value="rejected">Rechazada</option>
+      </select>
+    </div>
+
+    <div v-if="activeFilterChips.length" class="flex flex-wrap gap-2">
+      <span
+        v-for="chip in activeFilterChips" :key="chip.key"
+        class="inline-flex items-center gap-1 bg-primary-50 dark:bg-primary-500/10 text-primary-700 dark:text-primary-400 rounded-full text-xs px-3 py-1"
+      >
+        {{ chip.label }}
+        <button @click="clearFilter(chip.key as keyof typeof filters)" class="hover:text-primary-900 dark:hover:text-primary-200">✕</button>
+      </span>
     </div>
 
     <div v-if="error" class="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 rounded-xl text-red-600 dark:text-red-400 text-sm">
@@ -245,7 +287,7 @@ onMounted(fetchRequests);
               <tr v-if="requests.length === 0">
                 <td colspan="6" class="px-4 py-12 text-center text-gray-400 dark:text-gray-500">
                   <InboxIcon class="w-8 h-8 mx-auto mb-2 text-gray-300 dark:text-gray-600" />
-                  No hay solicitudes registradas.
+                  {{ search || filters.status ? "No hay solicitudes con estos filtros." : "No hay solicitudes registradas." }}
                 </td>
               </tr>
             </tbody>
@@ -273,7 +315,21 @@ onMounted(fetchRequests);
           <BaseButton v-if="canDelete(r)" variant="danger" class="flex-1" @click="openDeleteModal(r)">Eliminar</BaseButton>
         </div>
       </div>
+      <div v-if="requests.length === 0" class="text-center text-gray-400 dark:text-gray-500 py-12">
+        <InboxIcon class="w-8 h-8 mx-auto mb-2 text-gray-300 dark:text-gray-600" />
+        {{ search || filters.status ? "No hay solicitudes con estos filtros." : "No hay solicitudes registradas." }}
+      </div>
     </div>
+
+    <Pagination
+      v-if="!loading && requests.length > 0"
+      :page="page"
+      :limit="limit"
+      :total="total"
+      :total-pages="totalPages"
+      @update:page="page = $event"
+      @update:limit="limit = $event"
+    />
 
     <div v-if="showCreateModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4" @click="showCreateModal = false">
       <div class="bg-white dark:bg-gray-900 rounded-3xl w-full max-w-lg shadow-2xl p-6" @click.stop>

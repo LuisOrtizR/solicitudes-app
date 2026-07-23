@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted, watch } from "vue";
 import { permissionApi, type Permission } from "@/api/endpoints/permission.api";
-import { ExclamationTriangleIcon, InboxIcon } from "@heroicons/vue/24/outline";
+import { ExclamationTriangleIcon, InboxIcon, MagnifyingGlassIcon } from "@heroicons/vue/24/outline";
 import BaseButton from "@/components/ui/BaseButton.vue";
 import BaseInput from "@/components/ui/BaseInput.vue";
+import Pagination from "@/components/ui/Pagination.vue";
+import TableSkeleton from "@/components/ui/TableSkeleton.vue";
 
 const permissions = ref<Permission[]>([]);
 const loading = ref(false);
@@ -98,10 +100,15 @@ const deletePermission = async (p: Permission) => {
   }
 };
 
-const pageNumbers = computed(() => {
-  const start = Math.max(1, currentPage.value - 1);
-  const end = Math.min(totalPages.value, start + 2);
-  return Array.from({ length: end - start + 1 }, (_, i) => start + i);
+const onLimitChange = (newLimit: number) => {
+  limit.value = newLimit;
+  fetchPermissions(1);
+};
+
+let searchDebounce: ReturnType<typeof setTimeout> | undefined;
+watch(search, () => {
+  if (searchDebounce) clearTimeout(searchDebounce);
+  searchDebounce = setTimeout(() => fetchPermissions(1), 300);
 });
 
 onMounted(() => fetchPermissions());
@@ -133,25 +140,27 @@ onMounted(() => fetchPermissions());
       </div>
     </div>
 
+    <!-- BUSCADOR -->
+    <div class="relative max-w-sm">
+      <MagnifyingGlassIcon class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 pointer-events-none" />
+      <input
+        v-model="search"
+        placeholder="Buscar permiso..."
+        class="w-full pl-9 pr-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary-500"
+      />
+    </div>
+
     <!-- ERROR -->
     <div
       v-if="error"
       class="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 rounded-xl text-red-600 dark:text-red-400 text-sm"
     >
-<ExclamationTriangleIcon class="w-5 h-5 shrink-0" /> {{ error }}
+      <ExclamationTriangleIcon class="w-5 h-5 shrink-0" /> {{ error }}
+      <button @click="fetchPermissions(currentPage)" class="ml-auto text-xs font-semibold underline hover:no-underline shrink-0">Reintentar</button>
     </div>
 
     <!-- LOADING -->
-    <div
-      v-if="loading"
-      class="flex items-center justify-center py-12 gap-3 text-gray-400"
-    >
-      <svg class="animate-spin h-5 w-5" viewBox="0 0 24 24">
-        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none" class="opacity-25"/>
-        <path fill="currentColor" d="M4 12a8 8 0 018-8v8z" class="opacity-75"/>
-      </svg>
-      <span class="text-sm">Cargando permisos...</span>
-    </div>
+    <TableSkeleton v-if="loading" :rows="6" :columns="3" />
 
     <!-- TABLA -->
     <div v-else class="hidden md:block">
@@ -172,7 +181,7 @@ onMounted(() => fetchPermissions());
                 <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
                   Descripción
                 </th>
-                <th class="px-4 py-3 text-right text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+                <th class="sticky right-0 px-4 py-3 text-right text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider bg-gray-50 dark:bg-gray-800/50">
                   Acciones
                 </th>
               </tr>
@@ -213,11 +222,11 @@ onMounted(() => fetchPermissions());
                   {{ p.description || "— Sin descripción —" }}
                 </td>
 
-                <td class="px-4 py-3 text-right">
-                  <div
-                    v-if="!p.is_protected"
-                    class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
+                <td
+                  class="sticky right-0 px-4 py-3 text-right"
+                  :class="p.is_protected ? 'bg-gray-50 dark:bg-gray-800/50' : 'bg-white dark:bg-gray-900 group-hover:bg-gray-50 dark:group-hover:bg-gray-800/50'"
+                >
+                  <div v-if="!p.is_protected" class="flex justify-end gap-2">
                     <BaseButton variant="primary" class="!px-3 !py-1.5 !text-xs" @click="openEdit(p)">
                       Editar
                     </BaseButton>
@@ -244,30 +253,15 @@ onMounted(() => fetchPermissions());
     </div>
 
     <!-- PAGINACIÓN -->
-    <div
-      v-if="totalPages > 1"
-      class="flex justify-between items-center pt-4"
-    >
-      <span class="text-sm text-gray-500 dark:text-gray-400">
-        Página {{ currentPage }} de {{ totalPages }}
-      </span>
-
-      <div class="flex gap-2">
-        <button
-          v-for="page in pageNumbers"
-          :key="page"
-          @click="fetchPermissions(page)"
-          :class="[
-            'px-3 py-1 rounded-lg text-sm transition-colors',
-            page === currentPage
-              ? 'bg-primary-600 dark:bg-primary-500 text-white'
-              : 'border border-gray-200 dark:border-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
-          ]"
-        >
-          {{ page }}
-        </button>
-      </div>
-    </div>
+    <Pagination
+      v-if="!loading && permissions.length > 0"
+      :page="currentPage"
+      :limit="limit"
+      :total="total"
+      :total-pages="totalPages"
+      @update:page="fetchPermissions($event)"
+      @update:limit="onLimitChange"
+    />
 
     <!-- MODAL -->
     <div

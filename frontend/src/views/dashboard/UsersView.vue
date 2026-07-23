@@ -3,12 +3,13 @@ import { ref, onMounted } from "vue";
 import { userApi, type User } from "@/api/endpoints/user.api";
 import { roleApi, type Role } from "@/api/endpoints/role.api";
 import BaseButton from "@/components/ui/BaseButton.vue";
+import Pagination from "@/components/ui/Pagination.vue";
+import TableSkeleton from "@/components/ui/TableSkeleton.vue";
+import { useListQuery } from "@/composables/useListQuery";
+import { MagnifyingGlassIcon, ExclamationTriangleIcon, InboxIcon } from "@heroicons/vue/24/outline";
 
 // ----- Datos -----
-const users = ref<User[]>([]);
 const roles = ref<Role[]>([]);
-const loading = ref(false);
-const error = ref<string | null>(null);
 
 // ----- Modal de edición -----
 const showEditModal = ref(false);
@@ -19,24 +20,34 @@ const editForm = ref({
   role: ""
 });
 
-// ----- Funciones API -----
-const fetchUsers = async () => {
-  loading.value = true;
-  error.value = null;
-  try {
-    const res = await userApi.getAll();
-    users.value = res.data.data;
-  } catch (err: any) {
-    error.value = err.response?.data?.message || "Error cargando usuarios";
-  } finally {
-    loading.value = false;
-  }
-};
+interface UserFilters {
+  role?: string;
+  is_active?: string;
+}
 
+const {
+  page, limit, search, filters, data: users, total, totalPages,
+  loading, error, activeFilterChips, setFilter, clearFilter, refetch,
+} = useListQuery<User, UserFilters>(
+  async (params) => {
+    const { is_active, ...rest } = params;
+    const apiParams = is_active !== undefined ? { ...rest, is_active: is_active === "true" } : rest;
+    return (await userApi.getAll(apiParams)).data;
+  },
+  {
+    initialFilters: { role: undefined, is_active: undefined },
+    filterLabels: {
+      role: (v) => `Rol: ${v}`,
+      is_active: (v) => `Estado: ${v === "true" ? "Activo" : "Inactivo"}`,
+    },
+  }
+);
+
+// ----- Funciones API -----
 const fetchRoles = async () => {
   try {
-    const res = await roleApi.getAll();
-    roles.value = res.data;
+    const res = await roleApi.getAll({ limit: 100 });
+    roles.value = res.data.data;
   } catch (err: any) {
     console.error("Error cargando roles:", err);
   }
@@ -75,7 +86,7 @@ const updateUser = async () => {
       await userApi.changeRole(editingUser.value.id, { role: editForm.value.role });
     }
 
-    await fetchUsers();
+    await refetch();
     closeEditModal();
   } catch (err: any) {
     alert(err.response?.data?.message || "Error actualizando usuario");
@@ -87,7 +98,7 @@ const deleteUser = async (id: string) => {
   if (!confirm("¿Eliminar usuario?")) return;
   try {
     await userApi.delete(id);
-    await fetchUsers();
+    await refetch();
   } catch (err: any) {
     alert(err.response?.data?.message || "Error eliminando usuario");
   }
@@ -108,56 +119,158 @@ const formatDate = (date: string) => new Date(date).toLocaleDateString();
 
 // ----- On Mounted -----
 onMounted(async () => {
-  await fetchUsers();
   await fetchRoles();
+  await refetch();
 });
 </script>
 
 <template>
-  <div class="p-6">
-    <h1 class="text-2xl font-bold mb-6 text-gray-900 dark:text-white">
-      Administración de Usuarios
-    </h1>
+  <div class="space-y-5 min-w-0">
 
-    <div v-if="loading" class="text-gray-500 dark:text-gray-400">Cargando usuarios...</div>
-    <div v-if="error" class="text-red-500 dark:text-red-400 mb-4">{{ error }}</div>
-
-    <!-- Tabla de usuarios -->
-    <div class="hidden md:block overflow-x-auto">
-      <table class="w-full bg-white dark:bg-gray-900 rounded-2xl shadow border border-gray-100 dark:border-gray-800">
-        <thead class="bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm">
-          <tr>
-            <th class="p-4 text-left">Nombre</th>
-            <th class="p-4 text-left">Email</th>
-            <th class="p-4 text-left">Rol</th>
-            <th class="p-4 text-left">Estado</th>
-            <th class="p-4 text-left">Creado</th>
-            <th class="p-4 text-right">Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="user in users" :key="user.id" class="border-t border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 transition">
-            <td class="p-4 font-medium text-gray-800 dark:text-white">{{ user.name }}</td>
-            <td class="p-4 text-gray-600 dark:text-gray-400">{{ user.email }}</td>
-            <td class="p-4">
-              <span :class="roleClass(getRole(user))" class="px-3 py-1 rounded-full text-xs font-semibold">
-                {{ getRole(user) }}
-              </span>
-            </td>
-            <td class="p-4">
-              <span :class="statusClass(user.is_active)" class="px-3 py-1 rounded-full text-xs font-semibold">
-                {{ user.is_active ? "Activo" : "Inactivo" }}
-              </span>
-            </td>
-            <td class="p-4 text-sm text-gray-500 dark:text-gray-400">{{ formatDate(user.created_at) }}</td>
-            <td class="p-4 text-right space-x-2">
-              <BaseButton variant="primary" @click="openEditModal(user)" class="px-4 py-2 text-sm">Editar</BaseButton>
-              <BaseButton variant="danger-solid" @click="deleteUser(user.id)" class="px-4 py-2 text-sm">Eliminar</BaseButton>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <div class="flex justify-between items-start">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">
+          Administración de Usuarios
+        </h1>
+        <p class="text-sm text-gray-400 dark:text-gray-500 mt-0.5">Gestión de cuentas y roles</p>
+      </div>
+      <div class="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 px-4 py-2 rounded-xl shrink-0">
+        <span class="text-xs text-gray-500 dark:text-gray-400">Total</span>
+        <span class="text-lg font-bold text-gray-800 dark:text-white">{{ total }}</span>
+      </div>
     </div>
+
+    <!-- BUSCADOR + FILTROS -->
+    <div class="flex flex-col sm:flex-row gap-3 sm:items-center">
+      <div class="relative flex-1 max-w-sm">
+        <MagnifyingGlassIcon class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 pointer-events-none" />
+        <input
+          v-model="search"
+          placeholder="Buscar usuario..."
+          class="w-full pl-9 pr-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary-500"
+        />
+      </div>
+      <select
+        :value="filters.role ?? ''"
+        @change="setFilter('role', ($event.target as HTMLSelectElement).value || undefined)"
+        class="text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-primary-500"
+      >
+        <option value="">Todos los roles</option>
+        <option v-for="r in roles" :key="r.id" :value="r.name">{{ r.name }}</option>
+      </select>
+      <select
+        :value="filters.is_active ?? ''"
+        @change="setFilter('is_active', ($event.target as HTMLSelectElement).value || undefined)"
+        class="text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-primary-500"
+      >
+        <option value="">Todos los estados</option>
+        <option value="true">Activo</option>
+        <option value="false">Inactivo</option>
+      </select>
+    </div>
+
+    <div v-if="activeFilterChips.length" class="flex flex-wrap gap-2">
+      <span
+        v-for="chip in activeFilterChips" :key="chip.key"
+        class="inline-flex items-center gap-1 bg-primary-50 dark:bg-primary-500/10 text-primary-700 dark:text-primary-400 rounded-full text-xs px-3 py-1"
+      >
+        {{ chip.label }}
+        <button @click="clearFilter(chip.key as keyof typeof filters)" class="hover:text-primary-900 dark:hover:text-primary-200">✕</button>
+      </span>
+    </div>
+
+    <div v-if="error" class="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 rounded-xl text-red-600 dark:text-red-400 text-sm">
+      <ExclamationTriangleIcon class="w-5 h-5 shrink-0" /> {{ error }}
+      <button @click="refetch" class="ml-auto text-xs font-semibold underline hover:no-underline shrink-0">Reintentar</button>
+    </div>
+
+    <TableSkeleton v-if="loading" :rows="6" :columns="5" />
+
+    <!-- Tabla de usuarios (desktop) -->
+    <div v-else class="hidden md:block">
+      <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Nombre</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Email</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Rol</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Estado</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Creado</th>
+                <th class="sticky right-0 px-4 py-3 text-right text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider bg-gray-50 dark:bg-gray-800/50">Acciones</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-50 dark:divide-gray-800">
+              <tr v-for="user in users" :key="user.id" class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group">
+                <td class="px-4 py-3 font-medium text-gray-800 dark:text-white">{{ user.name }}</td>
+                <td class="px-4 py-3 text-gray-600 dark:text-gray-400">{{ user.email }}</td>
+                <td class="px-4 py-3">
+                  <span :class="roleClass(getRole(user))" class="px-3 py-1 rounded-full text-xs font-semibold">
+                    {{ getRole(user) }}
+                  </span>
+                </td>
+                <td class="px-4 py-3">
+                  <span :class="statusClass(user.is_active)" class="px-3 py-1 rounded-full text-xs font-semibold">
+                    {{ user.is_active ? "Activo" : "Inactivo" }}
+                  </span>
+                </td>
+                <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{{ formatDate(user.created_at) }}</td>
+                <td class="sticky right-0 px-4 py-3 text-right bg-white dark:bg-gray-900 group-hover:bg-gray-50 dark:group-hover:bg-gray-800/50">
+                  <div class="flex items-center justify-end gap-2">
+                    <BaseButton variant="primary" class="!px-3 !py-1.5 !text-xs" @click="openEditModal(user)">Editar</BaseButton>
+                    <BaseButton variant="danger-solid" class="!px-3 !py-1.5 !text-xs" @click="deleteUser(user.id)">Eliminar</BaseButton>
+                  </div>
+                </td>
+              </tr>
+              <tr v-if="users.length === 0">
+                <td colspan="6" class="p-8 text-center text-gray-400 dark:text-gray-500">
+                  <InboxIcon class="w-8 h-8 mx-auto mb-2 text-gray-300 dark:text-gray-600" />
+                  {{ search || filters.role || filters.is_active ? "No hay usuarios con estos filtros." : "No hay usuarios registrados." }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- CARDS MOBILE -->
+    <div v-if="!loading" class="md:hidden space-y-3">
+      <div v-if="users.length === 0" class="text-center py-12 text-gray-400 dark:text-gray-500">
+        <InboxIcon class="w-8 h-8 mx-auto mb-2 text-gray-300 dark:text-gray-600" />
+        <p class="text-sm">{{ search || filters.role || filters.is_active ? "No hay usuarios con estos filtros." : "No hay usuarios registrados." }}</p>
+      </div>
+      <div v-for="user in users" :key="user.id" class="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 p-4">
+        <div class="flex justify-between items-start mb-2">
+          <div class="min-w-0">
+            <div class="font-semibold text-gray-800 dark:text-white truncate">{{ user.name }}</div>
+            <div class="text-xs text-gray-400 dark:text-gray-500 truncate">{{ user.email }}</div>
+          </div>
+          <span :class="statusClass(user.is_active)" class="px-2.5 py-1 rounded-full text-xs font-semibold shrink-0">
+            {{ user.is_active ? "Activo" : "Inactivo" }}
+          </span>
+        </div>
+        <div class="flex items-center gap-2 mb-3">
+          <span :class="roleClass(getRole(user))" class="px-2.5 py-1 rounded-full text-xs font-semibold">
+            {{ getRole(user) }}
+          </span>
+          <span class="text-xs text-gray-400 dark:text-gray-500">{{ formatDate(user.created_at) }}</span>
+        </div>
+        <div class="flex gap-2">
+          <BaseButton variant="primary" class="flex-1" @click="openEditModal(user)">Editar</BaseButton>
+          <BaseButton variant="danger-solid" class="flex-1" @click="deleteUser(user.id)">Eliminar</BaseButton>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGINACIÓN -->
+    <Pagination
+      v-if="!loading && users.length > 0"
+      :page="page" :limit="limit" :total="total" :total-pages="totalPages"
+      @update:page="page = $event"
+      @update:limit="limit = $event"
+    />
 
     <!-- Modal editar usuario -->
     <div v-if="showEditModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" @click="closeEditModal">

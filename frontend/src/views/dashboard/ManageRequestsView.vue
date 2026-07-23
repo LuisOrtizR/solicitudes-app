@@ -9,6 +9,7 @@ import StatusBadge from "@/components/ui/StatusBadge.vue";
 import PriorityBadge from "@/components/ui/PriorityBadge.vue";
 import BaseButton from "@/components/ui/BaseButton.vue";
 import Pagination from "@/components/ui/Pagination.vue";
+import TableSkeleton from "@/components/ui/TableSkeleton.vue";
 import { useListQuery } from "@/composables/useListQuery";
 import {
   NoSymbolIcon,
@@ -225,7 +226,8 @@ const counters = computed(() => [
     </div>
 
     <div v-if="error" class="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 rounded-xl text-red-600 dark:text-red-400 text-sm">
-<ExclamationTriangleIcon class="w-5 h-5 shrink-0" /> {{ error }}
+      <ExclamationTriangleIcon class="w-5 h-5 shrink-0" /> {{ error }}
+      <button @click="refetch" class="ml-auto text-xs font-semibold underline hover:no-underline shrink-0">Reintentar</button>
     </div>
 
     <div class="grid grid-cols-3 md:grid-cols-6 gap-2">
@@ -284,13 +286,7 @@ const counters = computed(() => [
       </span>
     </div>
 
-    <div v-if="loading" class="flex items-center justify-center py-12 gap-3 text-gray-400">
-      <svg class="animate-spin h-5 w-5" viewBox="0 0 24 24">
-        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none" class="opacity-25"/>
-        <path fill="currentColor" d="M4 12a8 8 0 018-8v8z" class="opacity-75"/>
-      </svg>
-      <span class="text-sm">Cargando...</span>
-    </div>
+    <TableSkeleton v-if="loading" :rows="6" :columns="7" />
 
     <div v-else class="hidden md:block min-w-0">
       <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden">
@@ -315,7 +311,7 @@ const counters = computed(() => [
                 <th class="px-3 py-3 text-left text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Prior.</th>
                 <th class="px-3 py-3 text-left text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Estado</th>
                 <th class="px-3 py-3 text-left text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Fecha</th>
-                <th class="px-3 py-3 text-right text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Acciones</th>
+                <th class="sticky right-0 px-3 py-3 text-right text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider bg-gray-50 dark:bg-gray-800/50">Acciones</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-50 dark:divide-gray-800">
@@ -344,8 +340,8 @@ const counters = computed(() => [
                 <td class="px-3 py-3 text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap">
                   {{ new Date(r.created_at).toLocaleDateString("es-ES", { day: "2-digit", month: "short" }) }}
                 </td>
-                <td class="px-3 py-3 text-right">
-                  <div class="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <td class="sticky right-0 px-3 py-3 text-right bg-white dark:bg-gray-900 group-hover:bg-gray-50 dark:group-hover:bg-gray-800/50">
+                  <div class="flex items-center justify-end gap-1">
                     <BaseButton variant="primary" class="!px-2.5 !py-1 !text-xs" @click="openModal(r)">
                       Gestionar
                     </BaseButton>
@@ -369,7 +365,7 @@ const counters = computed(() => [
       </div>
     </div>
 
-    <div class="md:hidden space-y-3">
+    <div v-if="!loading" class="md:hidden space-y-3">
       <div v-for="r in requests" :key="r.id" class="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 p-4">
         <div class="flex justify-between items-start mb-2">
           <div class="flex-1 min-w-0 pr-2">

@@ -8,6 +8,8 @@ export interface User {
   permissions: string[]
   is_active: boolean
   created_at: string
+  area_id?: string | null
+  area_name?: string | null
 }
 
 export interface UserListParams {
@@ -16,6 +18,7 @@ export interface UserListParams {
   search?: string;
   role?: string;
   is_active?: boolean;
+  area_id?: string;
   sort?: string;
   order?: "ASC" | "DESC";
 }
@@ -47,11 +50,11 @@ export const userApi = {
   return api.get<ApiResponse<User>>("/users/me")
   },
 
-  create(data: { name: string; email: string; password: string }) {
+  create(data: { name: string; email: string; password: string; role: string; area_id?: string | null }) {
     return api.post("/users", data)
   },
 
-  update(id: string, data: { name: string; email: string }) {
+  update(id: string, data: { name: string; email: string; area_id?: string | null }) {
     return api.put(`/users/${id}`, data)
   },
 

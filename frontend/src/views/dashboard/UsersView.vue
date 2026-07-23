@@ -2,14 +2,30 @@
 import { ref, onMounted } from "vue";
 import { userApi, type User } from "@/api/endpoints/user.api";
 import { roleApi, type Role } from "@/api/endpoints/role.api";
+import { areaApi, type Area } from "@/api/endpoints/area.api";
+import { useAuthStore } from "@/stores/auth.store";
 import BaseButton from "@/components/ui/BaseButton.vue";
 import Pagination from "@/components/ui/Pagination.vue";
 import TableSkeleton from "@/components/ui/TableSkeleton.vue";
 import { useListQuery } from "@/composables/useListQuery";
 import { MagnifyingGlassIcon, ExclamationTriangleIcon, InboxIcon } from "@heroicons/vue/24/outline";
 
+const auth = useAuthStore();
+
 // ----- Datos -----
 const roles = ref<Role[]>([]);
+const areas = ref<Area[]>([]);
+
+// ----- Modal de creación -----
+const showCreateModal = ref(false);
+const createForm = ref({
+  name: "",
+  email: "",
+  password: "",
+  role: "user",
+  area_id: "" as string | ""
+});
+const createError = ref<string | null>(null);
 
 // ----- Modal de edición -----
 const showEditModal = ref(false);
@@ -17,7 +33,8 @@ const editingUser = ref<User | null>(null);
 const editForm = ref({
   name: "",
   email: "",
-  role: ""
+  role: "",
+  area_id: "" as string | ""
 });
 
 interface UserFilters {
@@ -53,13 +70,55 @@ const fetchRoles = async () => {
   }
 };
 
+const fetchAreas = async () => {
+  try {
+    const res = await areaApi.listActive();
+    areas.value = res.data.data;
+  } catch (err: any) {
+    console.error("Error cargando áreas:", err);
+  }
+};
+
+// ----- Crear usuario -----
+const openCreateModal = () => {
+  createForm.value = { name: "", email: "", password: "", role: "user", area_id: "" };
+  createError.value = null;
+  showCreateModal.value = true;
+};
+
+const closeCreateModal = () => {
+  showCreateModal.value = false;
+  createError.value = null;
+};
+
+const createUser = async () => {
+  createError.value = null;
+  if (!createForm.value.name.trim() || !createForm.value.email.trim() || !createForm.value.password.trim()) return;
+
+  try {
+    await userApi.create({
+      name: createForm.value.name,
+      email: createForm.value.email,
+      password: createForm.value.password,
+      role: createForm.value.role,
+      area_id: createForm.value.area_id || null
+    });
+
+    await refetch();
+    closeCreateModal();
+  } catch (err: any) {
+    createError.value = err.response?.data?.message || "Error creando usuario";
+  }
+};
+
 // ----- Editar usuario -----
 const openEditModal = (user: User) => {
   editingUser.value = user;
   editForm.value = {
     name: user.name,
     email: user.email,
-    role: user.roles?.[0] || ""
+    role: user.roles?.[0] || "",
+    area_id: user.area_id || ""
   };
   showEditModal.value = true;
 };
@@ -67,7 +126,7 @@ const openEditModal = (user: User) => {
 const closeEditModal = () => {
   showEditModal.value = false;
   editingUser.value = null;
-  editForm.value = { name: "", email: "", role: "" };
+  editForm.value = { name: "", email: "", role: "", area_id: "" };
 };
 
 const updateUser = async () => {
@@ -78,7 +137,8 @@ const updateUser = async () => {
     // Actualizar datos básicos
     await userApi.update(editingUser.value.id, {
       name: editForm.value.name,
-      email: editForm.value.email
+      email: editForm.value.email,
+      area_id: editForm.value.area_id || null
     });
 
     // Cambiar rol
@@ -120,6 +180,7 @@ const formatDate = (date: string) => new Date(date).toLocaleDateString();
 // ----- On Mounted -----
 onMounted(async () => {
   await fetchRoles();
+  await fetchAreas();
   await refetch();
 });
 </script>
@@ -134,9 +195,14 @@ onMounted(async () => {
         </h1>
         <p class="text-sm text-gray-400 dark:text-gray-500 mt-0.5">Gestión de cuentas y roles</p>
       </div>
-      <div class="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 px-4 py-2 rounded-xl shrink-0">
-        <span class="text-xs text-gray-500 dark:text-gray-400">Total</span>
-        <span class="text-lg font-bold text-gray-800 dark:text-white">{{ total }}</span>
+      <div class="flex items-center gap-3 shrink-0">
+        <div class="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 px-4 py-2 rounded-xl">
+          <span class="text-xs text-gray-500 dark:text-gray-400">Total</span>
+          <span class="text-lg font-bold text-gray-800 dark:text-white">{{ total }}</span>
+        </div>
+        <BaseButton v-if="auth.hasPermission('users_create')" variant="primary" @click="openCreateModal">
+          + Nuevo Usuario
+        </BaseButton>
       </div>
     </div>
 
@@ -196,6 +262,7 @@ onMounted(async () => {
                 <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Nombre</th>
                 <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Email</th>
                 <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Rol</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Área</th>
                 <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Estado</th>
                 <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Creado</th>
                 <th class="sticky right-0 px-4 py-3 text-right text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider bg-gray-50 dark:bg-gray-800/50">Acciones</th>
@@ -210,6 +277,7 @@ onMounted(async () => {
                     {{ getRole(user) }}
                   </span>
                 </td>
+                <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{{ user.area_name || "— Sin área —" }}</td>
                 <td class="px-4 py-3">
                   <span :class="statusClass(user.is_active)" class="px-3 py-1 rounded-full text-xs font-semibold">
                     {{ user.is_active ? "Activo" : "Inactivo" }}
@@ -224,7 +292,7 @@ onMounted(async () => {
                 </td>
               </tr>
               <tr v-if="users.length === 0">
-                <td colspan="6" class="p-8 text-center text-gray-400 dark:text-gray-500">
+                <td colspan="7" class="p-8 text-center text-gray-400 dark:text-gray-500">
                   <InboxIcon class="w-8 h-8 mx-auto mb-2 text-gray-300 dark:text-gray-600" />
                   {{ search || filters.role || filters.is_active ? "No hay usuarios con estos filtros." : "No hay usuarios registrados." }}
                 </td>
@@ -251,12 +319,13 @@ onMounted(async () => {
             {{ user.is_active ? "Activo" : "Inactivo" }}
           </span>
         </div>
-        <div class="flex items-center gap-2 mb-3">
+        <div class="flex items-center gap-2 mb-1">
           <span :class="roleClass(getRole(user))" class="px-2.5 py-1 rounded-full text-xs font-semibold">
             {{ getRole(user) }}
           </span>
           <span class="text-xs text-gray-400 dark:text-gray-500">{{ formatDate(user.created_at) }}</span>
         </div>
+        <div class="text-xs text-gray-400 dark:text-gray-500 mb-3">{{ user.area_name || "— Sin área —" }}</div>
         <div class="flex gap-2">
           <BaseButton variant="primary" class="flex-1" @click="openEditModal(user)">Editar</BaseButton>
           <BaseButton variant="danger-solid" class="flex-1" @click="deleteUser(user.id)">Eliminar</BaseButton>
@@ -294,11 +363,67 @@ onMounted(async () => {
               <option v-for="role in roles" :key="role.id" :value="role.name">{{ role.name }}</option>
             </select>
           </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Área</label>
+            <select v-model="editForm.area_id" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
+              <option value="">— Sin área —</option>
+              <option v-for="area in areas" :key="area.id" :value="area.id">{{ area.nombre }}</option>
+            </select>
+          </div>
         </div>
 
         <div class="flex gap-4 mt-6">
           <BaseButton variant="primary" @click="updateUser" class="flex-1 py-2">Guardar</BaseButton>
           <BaseButton variant="secondary" @click="closeEditModal" class="flex-1 py-2">Cancelar</BaseButton>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal crear usuario -->
+    <div v-if="showCreateModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" @click="closeCreateModal">
+      <div class="bg-white dark:bg-gray-900 rounded-2xl p-6 w-full max-w-md shadow-xl" @click.stop>
+        <h2 class="text-xl font-bold mb-6 text-gray-800 dark:text-white">Nuevo Usuario</h2>
+
+        <div v-if="createError" class="mb-4 flex items-center gap-2 p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 rounded-lg text-red-600 dark:text-red-400 text-sm">
+          <ExclamationTriangleIcon class="w-4 h-4 shrink-0" /> {{ createError }}
+        </div>
+
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Nombre</label>
+            <input v-model="createForm.name" type="text" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"/>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Email</label>
+            <input v-model="createForm.email" type="email" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"/>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Contraseña</label>
+            <input v-model="createForm.password" type="password" placeholder="Mínimo 8 caracteres" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"/>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Rol</label>
+            <select v-model="createForm.role" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
+              <option v-for="role in roles" :key="role.id" :value="role.name">{{ role.name }}</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Área</label>
+            <select v-model="createForm.area_id" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
+              <option value="">— Sin área —</option>
+              <option v-for="area in areas" :key="area.id" :value="area.id">{{ area.nombre }}</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="flex gap-4 mt-6">
+          <BaseButton variant="primary" @click="createUser" class="flex-1 py-2">Crear</BaseButton>
+          <BaseButton variant="secondary" @click="closeCreateModal" class="flex-1 py-2">Cancelar</BaseButton>
         </div>
       </div>
     </div>

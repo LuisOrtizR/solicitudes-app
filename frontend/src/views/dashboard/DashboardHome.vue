@@ -34,7 +34,7 @@ const stats = ref({
 const recentRequests = ref<any[]>([]);
 const loading = ref(false);
 
-const isAdmin = computed(() => authStore.isAdmin);
+const isAdmin = computed(() => authStore.hasPermission("requests_read_all"));
 
 // Porcentajes para barras de progreso
 const activePercent = computed(() =>

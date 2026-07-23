@@ -56,7 +56,7 @@ const editForm = ref({
   category: "otro" as RequestCategory,
 });
 
-const isAdmin = computed(() => authStore.isAdmin);
+const isAdmin = computed(() => authStore.hasPermission("requests_read_all"));
 
 const isOwner = (r: Request) => authStore.user?.id === r.user_id;
 

@@ -25,7 +25,7 @@ const detailRequest = ref<Request | null>(null);
 const historyList = ref<any[]>([]);
 const loadingHistory = ref(false);
 
-const isAdmin = computed(() => authStore.isAdmin);
+const isAdmin = computed(() => authStore.hasPermission("requests_read_all"));
 
 interface DeletedFilters {
   status?: string;

@@ -3,15 +3,6 @@ const authService = require('./auth.service');
 const asyncHandler = (fn) => (req, res, next) =>
   Promise.resolve(fn(req, res, next)).catch(next);
 
-const register = asyncHandler(async (req, res) => {
-  const user = await authService.registerUser(req.body);
-
-  res.status(201).json({
-    success: true,
-    data: user
-  });
-});
-
 const login = asyncHandler(async (req, res) => {
   const result = await authService.loginUser(req.body);
 
@@ -59,7 +50,6 @@ const reset = asyncHandler(async (req, res) => {
 });
 
 module.exports = {
-  register,
   login,
   refresh,
   logout,

@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const pool = require('../shared/config/db');
 const AppError = require('../shared/utils/AppError');
-const { createUser, findUserWithRolesByEmail } = require('../users/user.model');
+const { findUserWithRolesByEmail } = require('../users/user.model');
 const { sendPasswordResetEmail } = require('../shared/services/email.service');
 
 const normalizeEmail = (email) => email?.toLowerCase().trim();
@@ -42,45 +42,6 @@ const generateRefreshToken = async (userId) => {
   );
 
   return token;
-};
-
-const registerUser = async ({ name, email, password }) => {
-  if (!name?.trim())
-    throw new AppError('Nombre requerido', 400);
-
-  email = normalizeEmail(email);
-
-  if (!email || !validateEmailFormat(email))
-    throw new AppError('Email inválido', 400);
-
-  if (!validatePasswordStrength(password))
-    throw new AppError('Password debe tener mínimo 8 caracteres', 400);
-
-  const exists = await pool.query(
-    'SELECT 1 FROM users WHERE email=$1',
-    [email]
-  );
-
-  if (exists.rowCount)
-    throw new AppError('Usuario ya existe', 409);
-
-  const hashed = await bcrypt.hash(password.trim(), 12);
-  const user = await createUser(name.trim(), email, hashed);
-
-  const role = await pool.query(
-    `SELECT id FROM roles WHERE name='user'`
-  );
-
-  if (!role.rowCount)
-    throw new AppError('Rol base no configurado', 500);
-
-  await pool.query(
-    `INSERT INTO user_roles (user_id, role_id)
-     VALUES ($1,$2)`,
-    [user.id, role.rows[0].id]
-  );
-
-  return { id: user.id, name: user.name, email: user.email };
 };
 
 const loginUser = async ({ email, password }) => {
@@ -233,7 +194,6 @@ const resetPassword = async (token, newPassword) => {
 };
 
 module.exports = {
-  registerUser,
   loginUser,
   refreshSession,
   logoutSession,

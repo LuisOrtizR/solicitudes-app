@@ -3,7 +3,6 @@ const controller = require('./auth.controller');
 const validate = require('../shared/middleware/validate.middleware');
 
 const {
-  registerSchema,
   loginSchema,
   refreshSchema,
   forgotSchema,
@@ -12,7 +11,6 @@ const {
 
 const router = express.Router();
 
-router.post('/register', validate(registerSchema), controller.register);
 router.post('/login', validate(loginSchema), controller.login);
 router.post('/refresh', validate(refreshSchema), controller.refresh);
 router.post('/logout', controller.logout);

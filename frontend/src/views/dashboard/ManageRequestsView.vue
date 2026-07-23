@@ -8,6 +8,8 @@ import { useRouter } from "vue-router";
 import StatusBadge from "@/components/ui/StatusBadge.vue";
 import PriorityBadge from "@/components/ui/PriorityBadge.vue";
 import BaseButton from "@/components/ui/BaseButton.vue";
+import Pagination from "@/components/ui/Pagination.vue";
+import { useListQuery } from "@/composables/useListQuery";
 import {
   NoSymbolIcon,
   ExclamationTriangleIcon,
@@ -20,20 +22,16 @@ import {
   WrenchScrewdriverIcon,
   CheckCircleIcon,
   PencilSquareIcon,
+  MagnifyingGlassIcon,
 } from "@heroicons/vue/24/outline";
 
 const auth   = useAuthStore();
 const router = useRouter();
 
-const requests       = ref<Request[]>([]);
 const users          = ref<{ id: string; name: string; email: string }[]>([]);
-const loading        = ref(false);
-const error          = ref<string | null>(null);
 const showModal      = ref(false);
 const current        = ref<Request | null>(null);
 const saving         = ref(false);
-const filterStatus   = ref<string>("all");
-const filterPriority = ref<string>("all");
 const form           = ref({
   status:      "open" as RequestStatus,
   priority:    "medium" as RequestPriority,
@@ -59,31 +57,35 @@ const isLocked = computed(() =>
   ["closed", "rejected"].includes(current.value?.status ?? "")
 );
 
-const filtered = computed(() => {
-  return requests.value.filter(r => {
-    const matchStatus   = filterStatus.value   === "all" || r.status   === filterStatus.value;
-    const matchPriority = filterPriority.value === "all" || r.priority === filterPriority.value;
-    return matchStatus && matchPriority;
-  });
-});
+interface ManageFilters {
+  status?: string;
+  assignedTo?: string;
+}
+
+const statusFilterLabels: Record<string, string> = {
+  open: "Abierta", in_progress: "En Progreso", waiting_user: "Esp. Usuario",
+  resolved: "Resuelta", closed: "Cerrada", rejected: "Rechazada",
+};
+
+const {
+  page, limit, search, filters, data: requests, total, totalPages,
+  loading, error, activeFilterChips, setFilter, clearFilter, refetch,
+} = useListQuery<Request, ManageFilters>(
+  async (params) => (await requestApi.getAll(params)).data,
+  {
+    initialFilters: { status: undefined, assignedTo: undefined },
+    filterLabels: {
+      status: (v) => `Estado: ${statusFilterLabels[v] ?? v}`,
+      assignedTo: (v) => `Agente: ${getUserName(v)}`,
+    },
+  }
+);
 
 onMounted(async () => {
   if (!canManage.value) { router.push("/dashboard"); return; }
-  await Promise.all([loadRequests(), loadUsers()]);
+  await loadUsers();
+  await refetch();
 });
-
-const loadRequests = async () => {
-  loading.value = true;
-  error.value   = null;
-  try {
-    const res = await requestApi.getAll();
-    requests.value = Array.isArray(res.data) ? res.data : [];
-  } catch {
-    error.value = "Error cargando solicitudes";
-  } finally {
-    loading.value = false;
-  }
-};
 
 const loadUsers = async () => {
   try {
@@ -122,7 +124,7 @@ const save = async () => {
       resolution:  form.value.resolution || undefined,
     });
     closeModal();
-    loadRequests();
+    refetch();
   } catch (e: any) {
     alert(e.response?.data?.message || "Error actualizando solicitud");
   } finally {
@@ -168,7 +170,7 @@ const confirmDelete = async () => {
   try {
     await requestApi.delete(deleteTargetId.value, deleteReason.value.trim());
     closeDeleteModal();
-    loadRequests();
+    refetch();
   } catch (e: any) {
     alert(e.response?.data?.message || "Error eliminando");
   }
@@ -218,7 +220,7 @@ const counters = computed(() => [
       </div>
       <div class="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 px-4 py-2 rounded-xl shrink-0">
         <span class="text-xs text-gray-500 dark:text-gray-400">Total</span>
-        <span class="text-lg font-bold text-gray-800 dark:text-white">{{ requests.length }}</span>
+        <span class="text-lg font-bold text-gray-800 dark:text-white">{{ total }}</span>
       </div>
     </div>
 
@@ -229,19 +231,31 @@ const counters = computed(() => [
     <div class="grid grid-cols-3 md:grid-cols-6 gap-2">
       <div
         v-for="c in counters" :key="c.status"
-        :class="[c.bg, c.color, 'border-l-4 rounded-xl p-3 flex flex-col gap-0.5 cursor-pointer transition-opacity', filterStatus === c.status ? 'opacity-100 ring-2 ring-offset-1' : 'opacity-80 hover:opacity-100']"
-        @click="filterStatus = filterStatus === c.status ? 'all' : c.status"
+        :class="[c.bg, c.color, 'border-l-4 rounded-xl p-3 flex flex-col gap-0.5 cursor-pointer transition-opacity', filters.status === c.status ? 'opacity-100 ring-2 ring-offset-1' : 'opacity-80 hover:opacity-100']"
+        @click="filters.status === c.status ? clearFilter('status') : setFilter('status', c.status)"
       >
         <span :class="[c.num, 'text-xl font-bold leading-none']">
-          {{ requests.filter(r => r.status === c.status).length }}
+          {{ filters.status === c.status ? total : '—' }}
         </span>
         <span class="text-xs text-gray-500 dark:text-gray-400 leading-tight">{{ c.label }}</span>
       </div>
     </div>
 
     <div class="flex flex-wrap gap-2 items-center">
-      <select v-model="filterStatus" class="text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800 dark:text-white outline-none focus:ring-2 focus:ring-primary-400">
-        <option value="all">Todos los estados</option>
+      <div class="relative flex-1 max-w-xs">
+        <MagnifyingGlassIcon class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 pointer-events-none" />
+        <input
+          v-model="search"
+          placeholder="Buscar ticket..."
+          class="w-full pl-9 pr-3 py-1.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary-400"
+        />
+      </div>
+      <select
+        :value="filters.status ?? ''"
+        @change="setFilter('status', ($event.target as HTMLSelectElement).value || undefined)"
+        class="text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-lg px-3 py-1.5 outline-none focus:ring-2 focus:ring-primary-400"
+      >
+        <option value="">Todos los estados</option>
         <option value="open">Abierta</option>
         <option value="in_progress">En Progreso</option>
         <option value="waiting_user">Esp. Usuario</option>
@@ -249,21 +263,25 @@ const counters = computed(() => [
         <option value="closed">Cerrada</option>
         <option value="rejected">Rechazada</option>
       </select>
-      <select v-model="filterPriority" class="text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800 dark:text-white outline-none focus:ring-2 focus:ring-primary-400">
-        <option value="all">Todas las prioridades</option>
-        <option value="low">Baja</option>
-        <option value="medium">Media</option>
-        <option value="high">Alta</option>
-        <option value="urgent">Urgente</option>
-      </select>
-      <button
-        v-if="filterStatus !== 'all' || filterPriority !== 'all'"
-        @click="filterStatus = 'all'; filterPriority = 'all'"
-        class="text-xs text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 px-2 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+      <select
+        :value="filters.assignedTo ?? ''"
+        @change="setFilter('assignedTo', ($event.target as HTMLSelectElement).value || undefined)"
+        class="text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-lg px-3 py-1.5 outline-none focus:ring-2 focus:ring-primary-400"
       >
-        ✕ Limpiar filtros
-      </button>
-      <span class="text-xs text-gray-400 dark:text-gray-500 ml-auto">{{ filtered.length }} resultado{{ filtered.length !== 1 ? 's' : '' }}</span>
+        <option value="">Todos los agentes</option>
+        <option v-for="u in users" :key="u.id" :value="u.id">{{ u.name }}</option>
+      </select>
+      <span class="text-xs text-gray-400 dark:text-gray-500 ml-auto">{{ total }} resultado{{ total !== 1 ? 's' : '' }}</span>
+    </div>
+
+    <div v-if="activeFilterChips.length" class="flex flex-wrap gap-2">
+      <span
+        v-for="chip in activeFilterChips" :key="chip.key"
+        class="inline-flex items-center gap-1 bg-primary-50 dark:bg-primary-500/10 text-primary-700 dark:text-primary-400 rounded-full text-xs px-3 py-1"
+      >
+        {{ chip.label }}
+        <button @click="clearFilter(chip.key as keyof typeof filters)" class="hover:text-primary-900 dark:hover:text-primary-200">✕</button>
+      </span>
     </div>
 
     <div v-if="loading" class="flex items-center justify-center py-12 gap-3 text-gray-400">
@@ -301,7 +319,7 @@ const counters = computed(() => [
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-50 dark:divide-gray-800">
-              <tr v-for="r in filtered" :key="r.id" class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group">
+              <tr v-for="r in requests" :key="r.id" class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group">
                 <td class="px-3 py-3">
                   <span class="font-mono text-xs text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded">
                     #{{ r.id.slice(0, 6) }}
@@ -337,10 +355,12 @@ const counters = computed(() => [
                   </div>
                 </td>
               </tr>
-              <tr v-if="filtered.length === 0">
+              <tr v-if="requests.length === 0">
                 <td colspan="8" class="px-4 py-12 text-center">
                   <InboxIcon class="w-8 h-8 mx-auto mb-2 text-gray-300 dark:text-gray-600" />
-                  <p class="text-gray-400 dark:text-gray-500 text-sm">No hay solicitudes con estos filtros.</p>
+                  <p class="text-gray-400 dark:text-gray-500 text-sm">
+                    {{ search || filters.status || filters.assignedTo ? "No hay solicitudes con estos filtros." : "No hay solicitudes registradas." }}
+                  </p>
                 </td>
               </tr>
             </tbody>
@@ -350,7 +370,7 @@ const counters = computed(() => [
     </div>
 
     <div class="md:hidden space-y-3">
-      <div v-for="r in filtered" :key="r.id" class="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 p-4">
+      <div v-for="r in requests" :key="r.id" class="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 p-4">
         <div class="flex justify-between items-start mb-2">
           <div class="flex-1 min-w-0 pr-2">
             <div class="font-semibold text-gray-800 dark:text-white truncate">{{ r.title }}</div>
@@ -370,11 +390,20 @@ const counters = computed(() => [
           <BaseButton v-if="canDelete" variant="danger" class="flex-1" @click="openDeleteModal(r.id)">Eliminar</BaseButton>
         </div>
       </div>
-      <div v-if="filtered.length === 0" class="text-center py-12 text-gray-400 dark:text-gray-500">
+      <div v-if="requests.length === 0" class="text-center py-12 text-gray-400 dark:text-gray-500">
         <InboxIcon class="w-8 h-8 mx-auto mb-2 text-gray-300 dark:text-gray-600" />
-        <p class="text-sm">No hay solicitudes con estos filtros.</p>
+        <p class="text-sm">
+          {{ search || filters.status || filters.assignedTo ? "No hay solicitudes con estos filtros." : "No hay solicitudes registradas." }}
+        </p>
       </div>
     </div>
+
+    <Pagination
+      v-if="!loading && requests.length > 0"
+      :page="page" :limit="limit" :total="total" :total-pages="totalPages"
+      @update:page="page = $event"
+      @update:limit="limit = $event"
+    />
 
     <!-- MODAL GESTIONAR -->
     <div v-if="showModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4" @click="closeModal">

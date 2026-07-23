@@ -61,8 +61,6 @@ const openCreate = () => {
 };
 
 const openEdit = (p: Permission) => {
-  if (p.is_protected) return;
-
   form.value = {
     name: p.name,
     description: p.description || "",
@@ -89,7 +87,6 @@ const savePermission = async () => {
 };
 
 const deletePermission = async (p: Permission) => {
-  if (p.is_protected) return;
   if (!confirm("¿Eliminar permiso?")) return;
 
   try {
@@ -226,7 +223,7 @@ onMounted(() => fetchPermissions());
                   class="sticky right-0 px-4 py-3 text-right"
                   :class="p.is_protected ? 'bg-gray-50 dark:bg-gray-800/50' : 'bg-white dark:bg-gray-900 group-hover:bg-gray-50 dark:group-hover:bg-gray-800/50'"
                 >
-                  <div v-if="!p.is_protected" class="flex justify-end gap-2">
+                  <div class="flex justify-end gap-2">
                     <BaseButton variant="primary" class="!px-3 !py-1.5 !text-xs" @click="openEdit(p)">
                       Editar
                     </BaseButton>

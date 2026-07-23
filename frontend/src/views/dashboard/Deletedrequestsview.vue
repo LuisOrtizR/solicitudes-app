@@ -6,17 +6,18 @@ import type { Request } from "@/types/request.types";
 import StatusBadge from "@/components/ui/StatusBadge.vue";
 import PriorityBadge from "@/components/ui/PriorityBadge.vue";
 import BaseButton from "@/components/ui/BaseButton.vue";
+import Pagination from "@/components/ui/Pagination.vue";
+import TableSkeleton from "@/components/ui/TableSkeleton.vue";
+import { useListQuery } from "@/composables/useListQuery";
 import {
   ExclamationTriangleIcon,
   CheckCircleIcon,
   TrashIcon,
   ClipboardDocumentListIcon,
+  MagnifyingGlassIcon,
 } from "@heroicons/vue/24/outline";
 
 const authStore = useAuthStore();
-const requests = ref<Request[]>([]);
-const loading = ref(false);
-const error = ref<string | null>(null);
 
 const showDetailModal = ref(false);
 const detailRequest = ref<Request | null>(null);
@@ -25,18 +26,25 @@ const loadingHistory = ref(false);
 
 const isAdmin = computed(() => authStore.isAdmin);
 
-const fetchDeleted = async () => {
-  loading.value = true;
-  error.value = null;
-  try {
-    const res = await requestApi.getDeleted();
-    requests.value = res.data;
-  } catch (err: any) {
-    error.value = err.response?.data?.message || "Error cargando solicitudes eliminadas";
-  } finally {
-    loading.value = false;
-  }
+interface DeletedFilters {
+  status?: string;
+}
+
+const statusFilterLabels: Record<string, string> = {
+  open: "Abierta", in_progress: "En Progreso", waiting_user: "Esp. Usuario",
+  resolved: "Resuelta", closed: "Cerrada", rejected: "Rechazada",
 };
+
+const {
+  page, limit, search, filters, data: requests, total, totalPages,
+  loading, error, activeFilterChips, setFilter, clearFilter, refetch,
+} = useListQuery<Request, DeletedFilters>(
+  async (params) => (await requestApi.getDeleted(params)).data,
+  {
+    initialFilters: { status: undefined },
+    filterLabels: { status: (v) => `Estado: ${statusFilterLabels[v] ?? v}` },
+  }
+);
 
 const openDetail = async (r: Request) => {
   detailRequest.value = r;
@@ -60,7 +68,7 @@ const daysUntilPurge = (deletedAt: string) => {
   return Math.max(diff, 0);
 };
 
-onMounted(fetchDeleted);
+onMounted(refetch);
 </script>
 
 <template>
@@ -77,21 +85,50 @@ onMounted(fetchDeleted);
       </div>
       <div class="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 px-4 py-2 rounded-xl">
         <span class="text-xs text-gray-500 dark:text-gray-400">Total</span>
-        <span class="text-lg font-bold text-gray-800 dark:text-white">{{ requests.length }}</span>
+        <span class="text-lg font-bold text-gray-800 dark:text-white">{{ total }}</span>
       </div>
     </div>
 
-    <div v-if="error" class="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 rounded-xl text-red-600 dark:text-red-400 text-sm">
-<ExclamationTriangleIcon class="w-5 h-5 shrink-0" /> {{ error }}
+    <div class="flex flex-col sm:flex-row gap-3 sm:items-center">
+      <div class="relative flex-1 max-w-sm">
+        <MagnifyingGlassIcon class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 pointer-events-none" />
+        <input
+          v-model="search"
+          placeholder="Buscar solicitud eliminada..."
+          class="w-full pl-9 pr-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary-500"
+        />
+      </div>
+      <select
+        :value="filters.status ?? ''"
+        @change="setFilter('status', ($event.target as HTMLSelectElement).value || undefined)"
+        class="text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-primary-500"
+      >
+        <option value="">Todos los estados</option>
+        <option value="open">Abierta</option>
+        <option value="in_progress">En Progreso</option>
+        <option value="waiting_user">Esp. Usuario</option>
+        <option value="resolved">Resuelta</option>
+        <option value="closed">Cerrada</option>
+        <option value="rejected">Rechazada</option>
+      </select>
     </div>
 
-    <div v-if="loading" class="flex items-center justify-center py-12 gap-3 text-gray-400">
-      <svg class="animate-spin h-5 w-5" viewBox="0 0 24 24">
-        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none" class="opacity-25"/>
-        <path fill="currentColor" d="M4 12a8 8 0 018-8v8z" class="opacity-75"/>
-      </svg>
-      <span class="text-sm">Cargando...</span>
+    <div v-if="activeFilterChips.length" class="flex flex-wrap gap-2">
+      <span
+        v-for="chip in activeFilterChips" :key="chip.key"
+        class="inline-flex items-center gap-1 bg-primary-50 dark:bg-primary-500/10 text-primary-700 dark:text-primary-400 rounded-full text-xs px-3 py-1"
+      >
+        {{ chip.label }}
+        <button @click="clearFilter(chip.key as keyof typeof filters)" class="hover:text-primary-900 dark:hover:text-primary-200">✕</button>
+      </span>
     </div>
+
+    <div v-if="error" class="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 rounded-xl text-red-600 dark:text-red-400 text-sm">
+      <ExclamationTriangleIcon class="w-5 h-5 shrink-0" /> {{ error }}
+      <button @click="refetch" class="ml-auto text-xs font-semibold underline hover:no-underline shrink-0">Reintentar</button>
+    </div>
+
+    <TableSkeleton v-if="loading" :rows="6" :columns="6" />
 
     <div v-else class="hidden md:block">
       <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden">
@@ -105,7 +142,7 @@ onMounted(fetchDeleted);
                 <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase">Motivo</th>
                 <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase">Eliminada el</th>
                 <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase">Purga en</th>
-                <th class="px-4 py-3 text-right text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase">Acciones</th>
+                <th class="sticky right-0 px-4 py-3 text-right text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase bg-gray-50 dark:bg-gray-800/50">Acciones</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-50 dark:divide-gray-800">
@@ -138,8 +175,8 @@ onMounted(fetchDeleted);
                     {{ daysUntilPurge(r.deleted_at!) === 0 ? 'Hoy' : `${daysUntilPurge(r.deleted_at!)} día(s)` }}
                   </span>
                 </td>
-                <td class="px-4 py-3 text-right">
-                  <div class="flex justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+                <td class="sticky right-0 px-4 py-3 text-right bg-white dark:bg-gray-900 group-hover:bg-gray-50 dark:group-hover:bg-gray-800/50">
+                  <div class="flex justify-end">
                     <BaseButton variant="primary" class="!px-3 !py-1 !text-xs" @click="openDetail(r)">
                       Ver historial
                     </BaseButton>
@@ -149,7 +186,7 @@ onMounted(fetchDeleted);
               <tr v-if="requests.length === 0">
                 <td colspan="7" class="px-4 py-12 text-center text-gray-400 dark:text-gray-500">
                   <CheckCircleIcon class="w-8 h-8 mx-auto mb-2 text-emerald-300 dark:text-emerald-700" />
-                  No hay solicitudes pendientes de purga.
+                  {{ search || filters.status ? "No hay solicitudes con estos filtros." : "No hay solicitudes pendientes de purga." }}
                 </td>
               </tr>
             </tbody>
@@ -158,7 +195,11 @@ onMounted(fetchDeleted);
       </div>
     </div>
 
-    <div class="md:hidden space-y-3">
+    <div v-if="!loading" class="md:hidden space-y-3">
+      <div v-if="requests.length === 0" class="text-center py-12 text-gray-400 dark:text-gray-500">
+        <CheckCircleIcon class="w-8 h-8 mx-auto mb-2 text-emerald-300 dark:text-emerald-700" />
+        <p class="text-sm">{{ search || filters.status ? "No hay solicitudes con estos filtros." : "No hay solicitudes pendientes de purga." }}</p>
+      </div>
       <div v-for="r in requests" :key="r.id" class="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 p-4">
         <div class="flex justify-between items-start mb-2">
           <div class="flex-1 min-w-0 pr-2">
@@ -192,6 +233,13 @@ onMounted(fetchDeleted);
         </BaseButton>
       </div>
     </div>
+
+    <Pagination
+      v-if="!loading && requests.length > 0"
+      :page="page" :limit="limit" :total="total" :total-pages="totalPages"
+      @update:page="page = $event"
+      @update:limit="limit = $event"
+    />
 
     <div
       v-if="showDetailModal"

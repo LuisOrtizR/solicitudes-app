@@ -2,15 +2,15 @@
 import { ref, onMounted, computed } from "vue";
 import { roleApi, type Role } from "@/api/endpoints/role.api";
 import { permissionApi, type Permission } from "@/api/endpoints/permission.api";
-import { ExclamationTriangleIcon, ShieldCheckIcon } from "@heroicons/vue/24/outline";
+import { ExclamationTriangleIcon, ShieldCheckIcon, MagnifyingGlassIcon } from "@heroicons/vue/24/outline";
 import BaseButton from "@/components/ui/BaseButton.vue";
 import BaseInput from "@/components/ui/BaseInput.vue";
+import Pagination from "@/components/ui/Pagination.vue";
+import TableSkeleton from "@/components/ui/TableSkeleton.vue";
+import { useListQuery } from "@/composables/useListQuery";
 
-const roles         = ref<Role[]>([]);
 const permissions   = ref<Permission[]>([]);
-const loading       = ref(false);
 const actionLoading = ref(false);
-const error         = ref<string | null>(null);
 const searchPerm    = ref("");
 
 const form     = ref({ name: "", description: "" });
@@ -29,18 +29,13 @@ const filteredPermissions = computed(() => {
   );
 });
 
-const fetchRoles = async () => {
-  loading.value = true;
-  error.value   = null;
-  try {
-    const res  = await roleApi.getAll();
-    roles.value = res.data;
-  } catch (err: any) {
-    error.value = err.response?.data?.message || "Error cargando roles";
-  } finally {
-    loading.value = false;
-  }
-};
+const {
+  page, limit, search: roleSearch, data: roles, total, totalPages,
+  loading, error, refetch,
+} = useListQuery<Role, Record<string, never>>(
+  async (params) => (await roleApi.getAll(params)).data,
+  { initialFilters: {}, filterLabels: {} }
+);
 
 const fetchPermissions = async () => {
   try {
@@ -57,7 +52,7 @@ const createRole = async () => {
   try {
     await roleApi.create(form.value);
     form.value = { name: "", description: "" };
-    await fetchRoles();
+    await refetch();
   } catch (err: any) {
     alert(err.response?.data?.message || "Error creando rol");
   } finally {
@@ -77,7 +72,7 @@ const updateRole = async () => {
   try {
     await roleApi.update(editingRole.value.id, editForm.value);
     showEditModal.value = false;
-    await fetchRoles();
+    await refetch();
   } catch (err: any) {
     alert(err.response?.data?.message || "Error actualizando rol");
   } finally {
@@ -90,7 +85,7 @@ const deleteRole = async (id: string) => {
   actionLoading.value = true;
   try {
     await roleApi.delete(id);
-    roles.value = roles.value.filter(r => r.id !== id);
+    await refetch();
   } catch (err: any) {
     alert(err.response?.data?.message || "Error eliminando");
   } finally {
@@ -145,7 +140,7 @@ const selectedRole = computed(() =>
 );
 
 onMounted(() => {
-  fetchRoles();
+  refetch();
   fetchPermissions();
 });
 </script>
@@ -161,8 +156,18 @@ onMounted(() => {
       </div>
       <div class="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 px-4 py-2 rounded-xl shrink-0">
         <span class="text-xs text-gray-500 dark:text-gray-400">Total</span>
-        <span class="text-lg font-bold text-gray-800 dark:text-white">{{ roles.length }}</span>
+        <span class="text-lg font-bold text-gray-800 dark:text-white">{{ total }}</span>
       </div>
+    </div>
+
+    <!-- BUSCADOR -->
+    <div class="relative max-w-sm">
+      <MagnifyingGlassIcon class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 pointer-events-none" />
+      <input
+        v-model="roleSearch"
+        placeholder="Buscar rol..."
+        class="w-full pl-9 pr-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary-500"
+      />
     </div>
 
     <!-- CREAR ROL -->
@@ -187,65 +192,64 @@ onMounted(() => {
 
     <!-- ERROR -->
     <div v-if="error" class="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 rounded-xl text-red-600 dark:text-red-400 text-sm">
-<ExclamationTriangleIcon class="w-5 h-5 shrink-0" /> {{ error }}
+      <ExclamationTriangleIcon class="w-5 h-5 shrink-0" /> {{ error }}
+      <button @click="refetch" class="ml-auto text-xs font-semibold underline hover:no-underline shrink-0">Reintentar</button>
     </div>
 
     <!-- LOADING -->
-    <div v-if="loading" class="flex items-center justify-center py-12 gap-3 text-gray-400">
-      <svg class="animate-spin h-5 w-5" viewBox="0 0 24 24">
-        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none" class="opacity-25"/>
-        <path fill="currentColor" d="M4 12a8 8 0 018-8v8z" class="opacity-75"/>
-      </svg>
-      <span class="text-sm">Cargando roles...</span>
-    </div>
+    <TableSkeleton v-if="loading" :rows="6" :columns="3" />
 
     <!-- TABLA DESKTOP -->
     <div v-else class="hidden md:block">
       <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden">
-        <table class="w-full text-sm">
-          <thead>
-            <tr class="border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
-              <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Nombre</th>
-              <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Descripción</th>
-              <th class="px-4 py-3 text-right text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Acciones</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-50 dark:divide-gray-800">
-            <tr v-for="role in roles" :key="role.id" class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group">
-              <td class="px-4 py-3">
-                <span class="font-medium text-gray-800 dark:text-white bg-gray-100 dark:bg-gray-800 px-2.5 py-1 rounded-lg text-sm">
-                  {{ role.name }}
-                </span>
-              </td>
-              <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{{ role.description || "—" }}</td>
-              <td class="px-4 py-3 text-right">
-                <div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button @click="openPermissionsModal(role.id)"
-                    class="bg-emerald-500 dark:bg-emerald-600 text-white px-3 py-1.5 rounded-lg hover:bg-emerald-600 dark:hover:bg-emerald-500 text-xs font-medium transition-colors">
-                    Permisos
-                  </button>
-                  <BaseButton variant="primary" class="!px-3 !py-1.5 !text-xs" @click="openEditModal(role)">
-                    Editar
-                  </BaseButton>
-                  <BaseButton variant="danger" class="!px-3 !py-1.5 !text-xs" @click="deleteRole(role.id)">
-                    Eliminar
-                  </BaseButton>
-                </div>
-              </td>
-            </tr>
-            <tr v-if="roles.length === 0">
-              <td colspan="3" class="px-4 py-12 text-center">
-                <ShieldCheckIcon class="w-8 h-8 mx-auto mb-2 text-gray-300 dark:text-gray-600" />
-                <p class="text-gray-400 dark:text-gray-500 text-sm">No hay roles creados.</p>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Nombre</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Descripción</th>
+                <th class="sticky right-0 px-4 py-3 text-right text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider bg-gray-50 dark:bg-gray-800/50">Acciones</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-50 dark:divide-gray-800">
+              <tr v-for="role in roles" :key="role.id" class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group">
+                <td class="px-4 py-3">
+                  <span class="font-medium text-gray-800 dark:text-white bg-gray-100 dark:bg-gray-800 px-2.5 py-1 rounded-lg text-sm">
+                    {{ role.name }}
+                  </span>
+                </td>
+                <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{{ role.description || "—" }}</td>
+                <td class="sticky right-0 px-4 py-3 text-right bg-white dark:bg-gray-900 group-hover:bg-gray-50 dark:group-hover:bg-gray-800/50">
+                  <div class="flex items-center justify-end gap-2">
+                    <button @click="openPermissionsModal(role.id)"
+                      class="bg-emerald-500 dark:bg-emerald-600 text-white px-3 py-1.5 rounded-lg hover:bg-emerald-600 dark:hover:bg-emerald-500 text-xs font-medium transition-colors whitespace-nowrap">
+                      Permisos
+                    </button>
+                    <BaseButton variant="primary" class="!px-3 !py-1.5 !text-xs" @click="openEditModal(role)">
+                      Editar
+                    </BaseButton>
+                    <BaseButton variant="danger" class="!px-3 !py-1.5 !text-xs" @click="deleteRole(role.id)">
+                      Eliminar
+                    </BaseButton>
+                  </div>
+                </td>
+              </tr>
+              <tr v-if="roles.length === 0">
+                <td colspan="3" class="px-4 py-12 text-center">
+                  <ShieldCheckIcon class="w-8 h-8 mx-auto mb-2 text-gray-300 dark:text-gray-600" />
+                  <p class="text-gray-400 dark:text-gray-500 text-sm">
+                    {{ roleSearch ? "No se encontraron roles con esa búsqueda." : "No hay roles creados." }}
+                  </p>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
 
     <!-- CARDS MOBILE -->
-    <div class="md:hidden space-y-3">
+    <div v-if="!loading" class="md:hidden space-y-3">
       <div v-for="role in roles" :key="role.id" class="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 p-4">
         <div class="font-semibold text-gray-800 dark:text-white mb-1">{{ role.name }}</div>
         <div class="text-sm text-gray-400 dark:text-gray-500 mb-3">{{ role.description || "Sin descripción" }}</div>
@@ -255,7 +259,19 @@ onMounted(() => {
           <BaseButton variant="danger" class="flex-1" @click="deleteRole(role.id)">Eliminar</BaseButton>
         </div>
       </div>
+      <div v-if="roles.length === 0" class="text-center py-12 text-gray-400 dark:text-gray-500">
+        <ShieldCheckIcon class="w-8 h-8 mx-auto mb-2 text-gray-300 dark:text-gray-600" />
+        <p class="text-sm">{{ roleSearch ? "No se encontraron roles con esa búsqueda." : "No hay roles creados." }}</p>
+      </div>
     </div>
+
+    <!-- PAGINACIÓN -->
+    <Pagination
+      v-if="!loading && roles.length > 0"
+      :page="page" :limit="limit" :total="total" :total-pages="totalPages"
+      @update:page="page = $event"
+      @update:limit="limit = $event"
+    />
 
     <!-- MODAL EDITAR -->
     <div v-if="showEditModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4" @click="showEditModal = false">

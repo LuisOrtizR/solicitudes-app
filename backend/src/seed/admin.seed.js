@@ -67,12 +67,27 @@ async function assignRolePermissions(client, roleId, roleName) {
   console.log(`✅ ${permsResult.rows.length} permisos asignados al rol "${roleName}"`);
 }
 
+const COMPANY_AREAS = [
+  ['Service Desk IT', 'Área encargada de la gestión de tickets de soporte'],
+  ['Recursos Humanos', 'Gestión de personal, nómina, contratación y bienestar laboral'],
+  ['Finanzas', 'Contabilidad, tesorería y planificación financiera'],
+  ['Marketing', 'Gestión de marca, campañas y comunicación'],
+  ['Ventas', 'Gestión comercial y relación con clientes'],
+  ['Legal', 'Asuntos jurídicos, contratos y cumplimiento normativo'],
+  ['Operaciones', 'Gestión de procesos y logística interna'],
+  ['Atención al Cliente', 'Soporte y seguimiento a clientes externos'],
+  ['Infraestructura TI', 'Redes, servidores y sistemas internos'],
+];
+
 async function seedAreas(client) {
-  await client.query(
-    `INSERT INTO areas (nombre, descripcion)
-     VALUES ('Service Desk IT', 'Área encargada de la gestión de tickets de soporte')
-     ON CONFLICT (nombre) DO NOTHING`
-  );
+  for (const [nombre, descripcion] of COMPANY_AREAS) {
+    await client.query(
+      `INSERT INTO areas (nombre, descripcion)
+       VALUES ($1, $2)
+       ON CONFLICT (nombre) DO NOTHING`,
+      [nombre, descripcion]
+    );
+  }
 }
 
 async function createAdmin(client, adminRoleId) {

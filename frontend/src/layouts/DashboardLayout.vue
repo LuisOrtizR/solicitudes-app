@@ -17,6 +17,7 @@ import {
   ChartBarIcon,
   SunIcon,
   MoonIcon,
+  BuildingOffice2Icon,
 } from "@heroicons/vue/24/outline";
 import { useThemeStore } from "@/stores/theme.store";
 
@@ -30,17 +31,16 @@ const displayRole = computed<string>(() => {
   const firstRole = auth.user?.roles?.[0];
   if (!firstRole) return "Usuario";
   if (firstRole === "admin") return "Admin";
-  if (firstRole === "supervisor") return "Supervisor";
+  if (firstRole === "admin_system") return "Admin System";
   return firstRole.charAt(0).toUpperCase() + firstRole.slice(1);
 });
 
-const canViewUsers = computed(() => auth.hasPermission("users_read") || auth.isAdmin);
-const canViewRoles = computed(() => auth.hasPermission("manage_roles") || auth.isAdmin);
-const canViewPermissions = computed(() => auth.hasPermission("manage_permissions") || auth.isAdmin);
+const canViewUsers = computed(() => auth.hasPermission("users_read"));
+const canViewRoles = computed(() => auth.hasPermission("view_roles"));
+const canViewPermissions = computed(() => auth.hasPermission("permissions_read"));
+const canViewAreas = computed(() => auth.hasPermission("areas_manage"));
 const canViewAnalytics = computed(() => auth.hasPermission("analytics_read"));
-const canManageRequests = computed(
-  () => auth.hasPermission("requests_read.all") || auth.hasRole("supervisor") || auth.isAdmin
-);
+const canManageRequests = computed(() => auth.hasPermission("requests_read_all"));
 
 const navItems = computed(() => [
   { to: "/dashboard", label: "Dashboard", icon: HomeIcon, exact: true, show: true },
@@ -53,11 +53,12 @@ const adminItems = computed(() => [
   { to: "/dashboard/users", label: "Usuarios", icon: UsersIcon, show: canViewUsers.value },
   { to: "/dashboard/roles", label: "Roles", icon: ShieldCheckIcon, show: canViewRoles.value },
   { to: "/dashboard/permissions", label: "Permisos", icon: KeyIcon, show: canViewPermissions.value },
+  { to: "/dashboard/areas", label: "Áreas", icon: BuildingOffice2Icon, show: canViewAreas.value },
   { to: "/dashboard/analytics", label: "Analítica", icon: ChartBarIcon, show: canViewAnalytics.value },
 ]);
 
 const showAdminSection = computed(
-  () => canViewUsers.value || canViewRoles.value || canViewPermissions.value || canViewAnalytics.value
+  () => canViewUsers.value || canViewRoles.value || canViewPermissions.value || canViewAreas.value || canViewAnalytics.value
 );
 
 const handleLogout = async () => {

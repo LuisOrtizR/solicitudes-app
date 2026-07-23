@@ -22,6 +22,8 @@ const canManageAllRequests = (user) => {
   return user.area_name === 'Service Desk IT';
 };
 
+const isAssignedAgent = (user) => user.permissions?.includes('requests_manage_assigned');
+
 const FIELD_LABELS = {
   title: 'Título', description: 'Descripción', status: 'Estado',
   priority: 'Prioridad', assigned_to: 'Asignado a', resolution: 'Resolución'
@@ -86,21 +88,22 @@ const updateExistingRequest = async (id, data, user) => {
     );
 
   const isPrivileged = canManageAllRequests(user);
+  const isOwnAssignedTicket = !isPrivileged && isAssignedAgent(user) && current.assigned_to === user.id;
 
-  if (!isPrivileged) {
-    if (current.user_id !== user.id)
-      throw new AppError('No autorizado', 403);
-    if (current.status !== 'open')
-      throw new AppError('Solo puedes editar una solicitud mientras esté en estado Abierta', 403);
-
-    const updateData = { title: data.title, description: data.description };
-    const result = await updateRequestFull(id, updateData);
-    await _saveHistory(id, user.id, current, updateData);
+  if (isPrivileged || isOwnAssignedTicket) {
+    const result = await updateRequestFull(id, data);
+    await _saveHistory(id, user.id, current, data);
     return result;
   }
 
-  const result = await updateRequestFull(id, data);
-  await _saveHistory(id, user.id, current, data);
+  if (current.user_id !== user.id)
+    throw new AppError('No autorizado', 403);
+  if (current.status !== 'open')
+    throw new AppError('Solo puedes editar una solicitud mientras esté en estado Abierta', 403);
+
+  const updateData = { title: data.title, description: data.description };
+  const result = await updateRequestFull(id, updateData);
+  await _saveHistory(id, user.id, current, updateData);
   return result;
 };
 

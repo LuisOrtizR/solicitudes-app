@@ -6,14 +6,16 @@ const pool = require('../shared/config/db');
 const ROLE_PERMISSIONS = {
   admin: null, // null = todos los is_protected
   admin_system: null, // null = todos los is_protected (mismo conjunto que admin)
-  user: ['requests_create', 'requests_read']
+  user: ['requests_create', 'requests_read'],
+  agente: ['requests_manage_assigned']
 };
 
 async function seedSystemRoles(client) {
   const roles = [
     { name: 'admin', description: 'Administrador del sistema' },
     { name: 'admin_system', description: 'Administrador del sistema (equivalente a admin, sin protección especial de cuenta)' },
-    { name: 'user',  description: 'Usuario estándar del sistema' }
+    { name: 'user',  description: 'Usuario estándar del sistema' },
+    { name: 'agente', description: 'Empleado de soporte: ve y gestiona solo los tickets que tiene asignados' }
   ];
 
   const roleIds = {};

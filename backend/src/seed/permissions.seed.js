@@ -29,6 +29,7 @@ const permissions = [
   { name: 'requests_create',    description: 'Crear una nueva solicitud',                is_protected: true },
   { name: 'requests_read',      description: 'Ver solicitudes propias y detalle',        is_protected: true },
   { name: 'requests_read_all',  description: 'Ver todas las solicitudes (admin/agente)', is_protected: true },
+  { name: 'requests_manage_assigned', description: 'Ver y gestionar solo los tickets asignados a uno mismo', is_protected: true },
   { name: 'requests_update',    description: 'Actualizar una solicitud',                 is_protected: true },
   { name: 'requests_delete',    description: 'Eliminar una solicitud',                   is_protected: true },
 

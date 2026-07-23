@@ -117,6 +117,10 @@ const _buildRequestConditions = ({ scope, userId, search, status, assignedTo }) 
     conditions.push(scope === 'mine' ? 'r.deleted_at IS NULL' : 'r.deleted_at IS NOT NULL');
     conditions.push(`r.user_id = $${idx++}`);
     values.push(userId);
+  } else if (scope === 'assigned') {
+    conditions.push('r.deleted_at IS NULL');
+    conditions.push(`r.assigned_to = $${idx++}`);
+    values.push(userId);
   } else {
     conditions.push(scope === 'all' ? 'r.deleted_at IS NULL' : 'r.deleted_at IS NOT NULL');
   }

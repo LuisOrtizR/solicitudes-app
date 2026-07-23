@@ -80,6 +80,12 @@ const router = createRouter({
           meta: { requiresPermission: "requests_read_all" },
         },
         {
+          path: "assigned-requests",
+          name: "assigned-requests",
+          component: () => import("@/views/dashboard/AssignedRequestsView.vue"),
+          meta: { requiresPermission: "requests_manage_assigned" },
+        },
+        {
           path: "deleted-requests",
           name: "deleted-requests",
           component: () => import("@/views/dashboard/Deletedrequestsview.vue"),

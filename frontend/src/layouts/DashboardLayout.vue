@@ -41,11 +41,13 @@ const canViewPermissions = computed(() => auth.hasPermission("permissions_read")
 const canViewAreas = computed(() => auth.hasPermission("areas_manage"));
 const canViewAnalytics = computed(() => auth.hasPermission("analytics_read"));
 const canManageRequests = computed(() => auth.hasPermission("requests_read_all"));
+const canManageAssigned = computed(() => auth.hasPermission("requests_manage_assigned"));
 
 const navItems = computed(() => [
   { to: "/dashboard", label: "Dashboard", icon: HomeIcon, exact: true, show: true },
   { to: "/dashboard/requests", label: "Pendientes", icon: ClipboardDocumentListIcon, exact: false, show: true },
   { to: "/dashboard/manage-requests", label: "Gestionar", icon: WrenchScrewdriverIcon, exact: false, show: canManageRequests.value },
+  { to: "/dashboard/assigned-requests", label: "Mis Tickets", icon: WrenchScrewdriverIcon, exact: false, show: canManageAssigned.value },
   { to: "/dashboard/deleted-requests", label: "Eliminadas", icon: TrashIcon, exact: false, show: true },
 ]);
 

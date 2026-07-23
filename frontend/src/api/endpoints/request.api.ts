@@ -24,6 +24,7 @@ export const requestApi = {
   create:     (data: CreateRequestDTO)             => api.post<Request>("/requests", data),
   getAll:     (params: RequestListParams = {})     => api.get<RequestListResponse>("/requests", { params }),
   getMine:    (params: RequestListParams = {})     => api.get<RequestListResponse>("/requests/mine", { params }),
+  getAssigned: (params: RequestListParams = {})    => api.get<RequestListResponse>("/requests/assigned", { params }),
   getDeleted: (params: RequestListParams = {})     => api.get<RequestListResponse>("/requests/deleted", { params }),
   getOne:     (id: string)                         => api.get<Request>(`/requests/${id}`),
   update:     (id: string, data: UpdateRequestDTO) => api.put<Request>(`/requests/${id}`, data),

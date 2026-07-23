@@ -23,7 +23,7 @@ const ADMIN_BASE_PERMISSIONS = [
   'create_roles', 'view_roles', 'edit_roles', 'delete_roles',
   'assign_permissions',
   'permissions_create', 'permissions_read', 'permissions_update', 'permissions_delete',
-  'areas_manage'
+  'areas_manage', 'requests_manage_assigned'
 ];
 
 const PROTECTED_ROLE_PERMISSIONS = {

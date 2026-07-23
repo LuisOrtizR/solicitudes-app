@@ -29,11 +29,24 @@ const getMine = asyncHandler(async (req, res) => {
   res.json({ success: true, ...result });
 });
 
+const getAssigned = asyncHandler(async (req, res) => {
+  const { assignedTo, ...rest } = req.query;
+  const result = await listRequestsService({ ...rest, scope: 'assigned', userId: req.user.id });
+  res.json({ success: true, ...result });
+});
+
 const canManageAllRequests = (user) => {
   if (!user.permissions?.includes('requests_read_all')) return false;
   if (user.roles.includes('admin') || user.roles.includes('admin_system')) return true;
   return user.area_name === 'Service Desk IT';
 };
+
+const isAssignedAgent = (user) => user.permissions?.includes('requests_manage_assigned');
+
+const canViewRequest = (user, request) =>
+  canManageAllRequests(user) ||
+  request.user_id === user.id ||
+  (isAssignedAgent(user) && request.assigned_to === user.id);
 
 const getDeleted = asyncHandler(async (req, res) => {
   const { assignedTo, ...rest } = req.query;
@@ -42,15 +55,13 @@ const getDeleted = asyncHandler(async (req, res) => {
   res.json({ success: true, ...result });
 });
 
-const isPrivileged = canManageAllRequests;
-
 const getOne = asyncHandler(async (req, res) => {
   const result = await getRequestById(req.params.id);
   if (!result.rowCount)
     return res.status(404).json({ message: 'Solicitud no encontrada' });
 
   const request = result.rows[0];
-  if (!isPrivileged(req.user) && request.user_id !== req.user.id)
+  if (!canViewRequest(req.user, request))
     return res.status(403).json({ message: 'No autorizado' });
 
   res.json(request);
@@ -76,11 +87,11 @@ const getHistory = asyncHandler(async (req, res) => {
   if (!request.rowCount)
     return res.status(404).json({ message: 'Solicitud no encontrada' });
 
-  if (!isPrivileged(req.user) && request.rows[0].user_id !== req.user.id)
+  if (!canViewRequest(req.user, request.rows[0]))
     return res.status(403).json({ message: 'No autorizado' });
 
   const result = await getHistoryByRequest(req.params.id);
   res.json(result.rows);
 });
 
-module.exports = { create, getAll, getMine, getDeleted, getOne, update, remove, getHistory };
+module.exports = { create, getAll, getMine, getAssigned, getDeleted, getOne, update, remove, getHistory };

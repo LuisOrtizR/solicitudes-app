@@ -45,6 +45,14 @@ router.get(
 );
 
 router.get(
+  '/assigned',
+  authenticate,
+  authorize('requests_manage_assigned'),
+  validate(listRequestsQuerySchema, 'query'),
+  controller.getAssigned
+);
+
+router.get(
   '/:id',
   authenticate,
   authorize('requests_read'),

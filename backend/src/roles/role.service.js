@@ -14,17 +14,21 @@ const {
 const { findById } = require('../permissions/permission.model');
 const AppError = require('../shared/utils/AppError');
 
-const SYSTEM_ROLES = ['admin', 'user'];
+const SYSTEM_ROLES = ['admin', 'admin_system', 'user'];
+
+const ADMIN_BASE_PERMISSIONS = [
+  'users_create', 'users_read', 'users_update', 'users_delete', 'users_change_role',
+  'requests_create', 'requests_read', 'requests_read_all',
+  'requests_update', 'requests_delete',
+  'create_roles', 'view_roles', 'edit_roles', 'delete_roles',
+  'assign_permissions',
+  'permissions_create', 'permissions_read', 'permissions_update', 'permissions_delete',
+  'areas_manage'
+];
 
 const PROTECTED_ROLE_PERMISSIONS = {
-  admin: [
-    'users_read', 'users_update', 'users_delete', 'users_change_role',
-    'requests_create', 'requests_read', 'requests_read_all',
-    'requests_update', 'requests_delete',
-    'create_roles', 'view_roles', 'edit_roles', 'delete_roles',
-    'assign_permissions',
-    'permissions_create', 'permissions_read', 'permissions_update', 'permissions_delete'
-  ],
+  admin: ADMIN_BASE_PERMISSIONS,
+  admin_system: ADMIN_BASE_PERMISSIONS,
   user: [
     'requests_create',
     'requests_read'

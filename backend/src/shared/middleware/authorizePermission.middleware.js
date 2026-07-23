@@ -6,10 +6,7 @@ const authorizePermission = (requiredPermission) => {
     if (!req.user)
       return next(new AppError('No autenticado', 401));
 
-    const { roles = [], permissions = [] } = req.user;
-
-    if (roles.includes('admin'))
-      return next();
+    const { permissions = [] } = req.user;
 
     if (!permissions.includes(requiredPermission))
       return next(

@@ -11,12 +11,12 @@ const parsePostgresArray = (value) => {
   return [];
 };
 
-const createUser = async (name, email, password) => {
+const createUser = async (name, email, password, areaId = null) => {
   const { rows } = await pool.query(
-    `INSERT INTO users (name, email, password)
-     VALUES ($1, $2, $3)
-     RETURNING id, name, email, is_active, created_at`,
-    [name, email, password]
+    `INSERT INTO users (name, email, password, area_id)
+     VALUES ($1, $2, $3, $4)
+     RETURNING id, name, email, is_active, created_at, area_id`,
+    [name, email, password, areaId]
   );
   return rows[0];
 };
@@ -63,12 +63,14 @@ const findUserWithRolesByEmail = async (email) => {
 const findUserWithRolesAndPermissionsById = async (id) => {
   const { rows } = await pool.query(
     `
-    SELECT 
+    SELECT
       u.id,
       u.name,
       u.email,
       u.is_active,
       u.is_protected,
+      u.area_id,
+      a.nombre AS area_name,
       COALESCE(
         ARRAY_AGG(DISTINCT r.name)
         FILTER (WHERE r.name IS NOT NULL),
@@ -84,8 +86,9 @@ const findUserWithRolesAndPermissionsById = async (id) => {
     LEFT JOIN roles r ON ur.role_id = r.id
     LEFT JOIN role_permissions rp ON r.id = rp.role_id
     LEFT JOIN permissions p ON rp.permission_id = p.id
+    LEFT JOIN areas a ON a.id = u.area_id
     WHERE u.id = $1
-    GROUP BY u.id
+    GROUP BY u.id, a.nombre
     `,
     [id]
   );
@@ -101,7 +104,7 @@ const findUserWithRolesAndPermissionsById = async (id) => {
 
 const allowedUserSort = ['name', 'email', 'created_at'];
 
-const _buildUserConditions = ({ search, role, isActive }) => {
+const _buildUserConditions = ({ search, role, isActive, areaId }) => {
   const conditions = [];
   const values = [];
   let idx = 1;
@@ -121,6 +124,10 @@ const _buildUserConditions = ({ search, role, isActive }) => {
     );
     values.push(role);
   }
+  if (areaId) {
+    conditions.push(`u.area_id = $${idx++}`);
+    values.push(areaId);
+  }
 
   return {
     where: conditions.length ? `WHERE ${conditions.join(' AND ')}` : '',
@@ -129,8 +136,8 @@ const _buildUserConditions = ({ search, role, isActive }) => {
   };
 };
 
-const getUsersPaginated = async ({ limit, offset, search, role, isActive, sort, order }) => {
-  const { where, values, nextIdx } = _buildUserConditions({ search, role, isActive });
+const getUsersPaginated = async ({ limit, offset, search, role, isActive, areaId, sort, order }) => {
+  const { where, values, nextIdx } = _buildUserConditions({ search, role, isActive, areaId });
 
   const safeSort = allowedUserSort.includes(sort) ? sort : 'created_at';
   const safeOrder = order === 'ASC' ? 'ASC' : 'DESC';
@@ -140,7 +147,7 @@ const getUsersPaginated = async ({ limit, offset, search, role, isActive, sort, 
   const { rows } = await pool.query(
     `
     SELECT
-      u.id, u.name, u.email, u.is_active, u.created_at, u.is_protected,
+      u.id, u.name, u.email, u.is_active, u.created_at, u.is_protected, u.area_id, a.nombre AS area_name,
       COALESCE(ARRAY_AGG(DISTINCT r.name) FILTER (WHERE r.name IS NOT NULL), ARRAY[]::VARCHAR[]) AS roles,
       COALESCE(ARRAY_AGG(DISTINCT p.name) FILTER (WHERE p.name IS NOT NULL), ARRAY[]::VARCHAR[]) AS permissions
     FROM users u
@@ -148,8 +155,9 @@ const getUsersPaginated = async ({ limit, offset, search, role, isActive, sort, 
     LEFT JOIN roles r ON ur.role_id = r.id
     LEFT JOIN role_permissions rp ON r.id = rp.role_id
     LEFT JOIN permissions p ON rp.permission_id = p.id
+    LEFT JOIN areas a ON a.id = u.area_id
     ${where}
-    GROUP BY u.id
+    GROUP BY u.id, a.nombre
     ORDER BY u.${safeSort} ${safeOrder}
     LIMIT $${nextIdx} OFFSET $${nextIdx + 1}
     `,
@@ -163,8 +171,8 @@ const getUsersPaginated = async ({ limit, offset, search, role, isActive, sort, 
   }));
 };
 
-const countUsersFiltered = async ({ search, role, isActive }) => {
-  const { where, values } = _buildUserConditions({ search, role, isActive });
+const countUsersFiltered = async ({ search, role, isActive, areaId }) => {
+  const { where, values } = _buildUserConditions({ search, role, isActive, areaId });
 
   const { rows } = await pool.query(
     `SELECT COUNT(*) FROM users u ${where}`,
@@ -177,14 +185,17 @@ const getUserById = async (id) => {
   const { rows } = await pool.query(
     `
     SELECT
-      id,
-      name,
-      email,
-      is_active,
-      is_protected,
-      created_at
-    FROM users
-    WHERE id = $1
+      u.id,
+      u.name,
+      u.email,
+      u.is_active,
+      u.is_protected,
+      u.created_at,
+      u.area_id,
+      a.nombre AS area_name
+    FROM users u
+    LEFT JOIN areas a ON a.id = u.area_id
+    WHERE u.id = $1
     `,
     [id]
   );
@@ -201,15 +212,16 @@ const findUserByEmail = async (email) => {
   return rows[0];
 };
 
-const updateUser = async (id, name, email) => {
+const updateUser = async (id, name, email, areaId) => {
   const { rows } = await pool.query(
     `UPDATE users
      SET name = $1,
          email = $2,
+         area_id = $3,
          updated_at = NOW()
-     WHERE id = $3
-     RETURNING id, name, email, is_active`,
-    [name, email, id]
+     WHERE id = $4
+     RETURNING id, name, email, is_active, area_id`,
+    [name, email, areaId ?? null, id]
   );
   return rows[0];
 };

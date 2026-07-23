@@ -1,6 +1,7 @@
 const AppError = require('../shared/utils/AppError');
 const {
   getUsersService,
+  createUserService,
   getUserService,
   updateUserService,
   deleteUserService,
@@ -18,6 +19,11 @@ const isAdminOrSelf = (user, id) =>
 const getAll = asyncHandler(async (req, res) => {
   const result = await getUsersService(req.query);
   res.json({ success: true, ...result });
+});
+
+const create = asyncHandler(async (req, res) => {
+  const user = await createUserService(req.body);
+  res.status(201).json({ success: true, data: user });
 });
 
 const getOne = asyncHandler(async (req, res) => {
@@ -90,6 +96,7 @@ const changeRole = asyncHandler(async (req, res) => {
 
 module.exports = {
   getAll,
+  create,
   getOne,
   getMe,
   update,

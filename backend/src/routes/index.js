@@ -6,6 +6,7 @@ const roleRoutes = require('../roles/role.routes');
 const permissionRoutes = require('../permissions/permission.routes');
 const requestRoutes = require('../requests/request.routes');
 const analyticsRoutes = require('../analytics/analytics.routes');
+const areaRoutes = require('../areas/area.routes');
 
 const router = express.Router();
 
@@ -15,5 +16,6 @@ router.use('/roles', roleRoutes);
 router.use('/permissions', permissionRoutes);
 router.use('/requests', requestRoutes);
 router.use('/analytics', analyticsRoutes);
+router.use('/areas', areaRoutes);
 
 module.exports = router;

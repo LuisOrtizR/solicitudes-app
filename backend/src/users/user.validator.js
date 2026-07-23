@@ -6,7 +6,16 @@ const idParamSchema = z.object({
 
 const updateUserSchema = z.object({
   name: z.string().min(3, 'Nombre mínimo 3 caracteres'),
-  email: z.string().email('Email inválido')
+  email: z.string().email('Email inválido'),
+  area_id: z.string().uuid('area_id debe ser un UUID válido').nullable().optional()
+});
+
+const createUserSchema = z.object({
+  name: z.string().min(3, 'Nombre mínimo 3 caracteres'),
+  email: z.string().email('Email inválido'),
+  password: z.string().min(8, 'Password mínimo 8 caracteres'),
+  role: z.string().min(1, 'Rol requerido'),
+  area_id: z.string().uuid('area_id debe ser un UUID válido').nullable().optional()
 });
 
 const changeRoleSchema = z.object({
@@ -26,6 +35,7 @@ const listUsersQuerySchema = z.object({
 module.exports = {
   idParamSchema,
   updateUserSchema,
+  createUserSchema,
   changeRoleSchema,
   listUsersQuerySchema
 };

@@ -58,6 +58,54 @@ const rejectedPercent = computed(() =>
 );
 
 // Cargar estadísticas
+const REQUEST_STATUSES = ["open", "in_progress", "waiting_user", "resolved", "closed", "rejected"] as const;
+
+const loadAdminRequestStats = async () => {
+  const [totalRes, openRes, inProgressRes, waitingUserRes, resolvedRes, closedRes, rejectedRes, recentRes] =
+    await Promise.all([
+      requestApi.getAll({ limit: 1 }),
+      requestApi.getAll({ status: "open", limit: 1 }),
+      requestApi.getAll({ status: "in_progress", limit: 1 }),
+      requestApi.getAll({ status: "waiting_user", limit: 1 }),
+      requestApi.getAll({ status: "resolved", limit: 1 }),
+      requestApi.getAll({ status: "closed", limit: 1 }),
+      requestApi.getAll({ status: "rejected", limit: 1 }),
+      requestApi.getAll({ limit: 5 }),
+    ]);
+
+  stats.value.requests.total = totalRes.data.total;
+  stats.value.requests.open = openRes.data.total;
+  stats.value.requests.in_progress = inProgressRes.data.total;
+  stats.value.requests.waiting_user = waitingUserRes.data.total;
+  stats.value.requests.resolved = resolvedRes.data.total;
+  stats.value.requests.closed = closedRes.data.total;
+  stats.value.requests.rejected = rejectedRes.data.total;
+  recentRequests.value = recentRes.data.data;
+};
+
+const loadMineRequestStats = async () => {
+  const [totalRes, openRes, inProgressRes, waitingUserRes, resolvedRes, closedRes, rejectedRes, recentRes] =
+    await Promise.all([
+      requestApi.getMine({ limit: 1 }),
+      requestApi.getMine({ status: "open", limit: 1 }),
+      requestApi.getMine({ status: "in_progress", limit: 1 }),
+      requestApi.getMine({ status: "waiting_user", limit: 1 }),
+      requestApi.getMine({ status: "resolved", limit: 1 }),
+      requestApi.getMine({ status: "closed", limit: 1 }),
+      requestApi.getMine({ status: "rejected", limit: 1 }),
+      requestApi.getMine({ limit: 5 }),
+    ]);
+
+  stats.value.requests.total = totalRes.data.total;
+  stats.value.requests.open = openRes.data.total;
+  stats.value.requests.in_progress = inProgressRes.data.total;
+  stats.value.requests.waiting_user = waitingUserRes.data.total;
+  stats.value.requests.resolved = resolvedRes.data.total;
+  stats.value.requests.closed = closedRes.data.total;
+  stats.value.requests.rejected = rejectedRes.data.total;
+  recentRequests.value = recentRes.data.data;
+};
+
 const loadStats = async () => {
   loading.value = true;
 
@@ -69,9 +117,8 @@ const loadStats = async () => {
       stats.value.users = usersRes.data.total;
 
       // --- Roles ---
-      // roleApi.getAll() → Role[]  (array directo)
       const rolesRes = await roleApi.getAll();
-      stats.value.roles = rolesRes.data.length;
+      stats.value.roles = rolesRes.data.total;
 
       // --- Permisos ---
       // permissionApi.getAll() → { success, total, page, limit, totalPages, data }
@@ -79,35 +126,16 @@ const loadStats = async () => {
       stats.value.permissions = permsRes.data.total;
 
       // --- Solicitudes (todas) ---
-      // requestApi.getAll() → Request[]  (array directo)
-      const requestsRes = await requestApi.getAll();
-      const requests = requestsRes.data;
-
-      fillRequestStats(requests);
-      recentRequests.value = requests.slice(0, 5);
+      await loadAdminRequestStats();
     } else {
       // Usuario normal: solo sus solicitudes
-      const requestsRes = await requestApi.getMine();
-      const requests = requestsRes.data;
-
-      fillRequestStats(requests);
-      recentRequests.value = requests.slice(0, 5);
+      await loadMineRequestStats();
     }
   } catch (error) {
     console.error("Error cargando stats:", error);
   } finally {
     loading.value = false;
   }
-};
-
-const fillRequestStats = (requests: any[]) => {
-  stats.value.requests.total       = requests.length;
-  stats.value.requests.open        = requests.filter((r) => r.status === "open").length;
-  stats.value.requests.in_progress = requests.filter((r) => r.status === "in_progress").length;
-  stats.value.requests.waiting_user = requests.filter((r) => r.status === "waiting_user").length;
-  stats.value.requests.resolved    = requests.filter((r) => r.status === "resolved").length;
-  stats.value.requests.closed      = requests.filter((r) => r.status === "closed").length;
-  stats.value.requests.rejected    = requests.filter((r) => r.status === "rejected").length;
 };
 
 // Colores de estado

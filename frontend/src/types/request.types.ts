@@ -12,12 +12,20 @@ export type RequestPriority =
   | "high"
   | "urgent";
 
+export type RequestCategory =
+  | "soporte_tecnico"
+  | "accesos_permisos"
+  | "hardware"
+  | "software"
+  | "otro";
+
 export interface Request {
   id: string;
   title: string;
   description: string;
   status: RequestStatus;
   priority: RequestPriority;
+  category: RequestCategory;
   user_id: string;
   assigned_to: string | null;
   resolution: string | null;
@@ -34,6 +42,7 @@ export interface CreateRequestDTO {
   title: string;
   description: string;
   priority?: RequestPriority;
+  category?: RequestCategory;
 }
 
 export interface UpdateRequestDTO {
@@ -41,6 +50,7 @@ export interface UpdateRequestDTO {
   description?: string;
   status?: RequestStatus;
   priority?: RequestPriority;
+  category?: RequestCategory;
   assigned_to?: string | null;
   resolution?: string | null;
 }

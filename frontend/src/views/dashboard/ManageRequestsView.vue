@@ -2,11 +2,12 @@
 import { ref, onMounted, computed } from "vue";
 import { requestApi } from "@/api/endpoints/request.api";
 import api from "@/api/axios";
-import type { Request, RequestStatus, RequestPriority } from "@/types/request.types";
+import type { Request, RequestStatus, RequestPriority, RequestCategory } from "@/types/request.types";
 import { useAuthStore } from "@/stores/auth.store";
 import { useRouter } from "vue-router";
 import StatusBadge from "@/components/ui/StatusBadge.vue";
 import PriorityBadge from "@/components/ui/PriorityBadge.vue";
+import CategoryBadge from "@/components/ui/CategoryBadge.vue";
 import BaseButton from "@/components/ui/BaseButton.vue";
 import Pagination from "@/components/ui/Pagination.vue";
 import TableSkeleton from "@/components/ui/TableSkeleton.vue";
@@ -29,16 +30,25 @@ import {
 const auth   = useAuthStore();
 const router = useRouter();
 
-const users          = ref<{ id: string; name: string; email: string }[]>([]);
+const users          = ref<{ id: string; name: string; email: string; area_name?: string | null }[]>([]);
 const showModal      = ref(false);
 const current        = ref<Request | null>(null);
 const saving         = ref(false);
 const form           = ref({
   status:      "open" as RequestStatus,
   priority:    "medium" as RequestPriority,
+  category:    "otro" as RequestCategory,
   assigned_to: null as string | null,
   resolution:  "",
 });
+
+const categoryOptions: { value: RequestCategory; label: string }[] = [
+  { value: "soporte_tecnico", label: "Soporte Técnico" },
+  { value: "accesos_permisos", label: "Accesos y Permisos" },
+  { value: "hardware", label: "Hardware" },
+  { value: "software", label: "Software" },
+  { value: "otro", label: "Otro" },
+];
 const history        = ref<any[]>([]);
 const showHistory    = ref(false);
 const historyLoading = ref(false);
@@ -48,11 +58,10 @@ const deleteTargetId   = ref<string | null>(null);
 const deleteReason     = ref("");
 const deleteReasonError = ref(false);
 
-const canManage = computed(() =>
-  auth.hasPermission("requests_read_all") || auth.hasRole("admin") || auth.hasRole("supervisor")
-);
-const canDelete = computed(() =>
-  auth.hasPermission("requests_delete") || auth.isAdmin
+const canManage = computed(() => auth.hasPermission("requests_read_all"));
+const canDelete = computed(() => auth.hasPermission("requests_delete"));
+const assignableUsers = computed(() =>
+  users.value.filter(u => u.area_name === "Service Desk IT")
 );
 const isLocked = computed(() =>
   ["closed", "rejected"].includes(current.value?.status ?? "")
@@ -106,6 +115,7 @@ const openModal = (r: Request) => {
   form.value = {
     status:      r.status,
     priority:    r.priority,
+    category:    r.category,
     assigned_to: r.assigned_to ?? null,
     resolution:  r.resolution  ?? "",
   };
@@ -121,6 +131,7 @@ const save = async () => {
     await requestApi.update(current.value.id, {
       status:      form.value.status,
       priority:    form.value.priority,
+      category:    form.value.category,
       assigned_to: form.value.assigned_to,
       resolution:  form.value.resolution || undefined,
     });
@@ -217,7 +228,7 @@ const counters = computed(() => [
     <div class="flex justify-between items-start">
       <div>
         <h1 class="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">Gestión de Tickets</h1>
-        <p class="text-sm text-gray-400 dark:text-gray-500 mt-0.5">Panel para Admin y Supervisores</p>
+        <p class="text-sm text-gray-400 dark:text-gray-500 mt-0.5">Panel para roles con acceso global a solicitudes</p>
       </div>
       <div class="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 px-4 py-2 rounded-xl shrink-0">
         <span class="text-xs text-gray-500 dark:text-gray-400">Total</span>
@@ -286,7 +297,7 @@ const counters = computed(() => [
       </span>
     </div>
 
-    <TableSkeleton v-if="loading" :rows="6" :columns="7" />
+    <TableSkeleton v-if="loading" :rows="6" :columns="9" />
 
     <div v-else class="hidden md:block min-w-0">
       <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden">
@@ -298,7 +309,8 @@ const counters = computed(() => [
               <col class="w-32">
               <col class="w-32">
               <col class="w-24">
-              <col class="w-28">
+              <col class="w-32">
+              <col class="w-24">
               <col class="w-24">
               <col class="w-28">
             </colgroup>
@@ -309,6 +321,7 @@ const counters = computed(() => [
                 <th class="px-3 py-3 text-left text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Usuario</th>
                 <th class="px-3 py-3 text-left text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Asignado</th>
                 <th class="px-3 py-3 text-left text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Prior.</th>
+                <th class="px-3 py-3 text-left text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Tipo</th>
                 <th class="px-3 py-3 text-left text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Estado</th>
                 <th class="px-3 py-3 text-left text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Fecha</th>
                 <th class="sticky right-0 px-3 py-3 text-right text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider bg-gray-50 dark:bg-gray-800/50">Acciones</th>
@@ -335,6 +348,9 @@ const counters = computed(() => [
                   <PriorityBadge :priority="r.priority" />
                 </td>
                 <td class="px-3 py-3">
+                  <CategoryBadge :category="r.category" />
+                </td>
+                <td class="px-3 py-3">
                   <StatusBadge :status="r.status" />
                 </td>
                 <td class="px-3 py-3 text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap">
@@ -352,7 +368,7 @@ const counters = computed(() => [
                 </td>
               </tr>
               <tr v-if="requests.length === 0">
-                <td colspan="8" class="px-4 py-12 text-center">
+                <td colspan="9" class="px-4 py-12 text-center">
                   <InboxIcon class="w-8 h-8 mx-auto mb-2 text-gray-300 dark:text-gray-600" />
                   <p class="text-gray-400 dark:text-gray-500 text-sm">
                     {{ search || filters.status || filters.assignedTo ? "No hay solicitudes con estos filtros." : "No hay solicitudes registradas." }}
@@ -374,8 +390,9 @@ const counters = computed(() => [
           </div>
           <StatusBadge :status="r.status" class="shrink-0" />
         </div>
-        <div class="flex items-center gap-2 mb-2">
+        <div class="flex items-center gap-2 mb-2 flex-wrap">
           <PriorityBadge :priority="r.priority" />
+          <CategoryBadge :category="r.category" />
           <span class="text-xs text-gray-400 dark:text-gray-500 truncate">{{ r.email }}</span>
         </div>
         <div class="text-xs text-gray-400 dark:text-gray-500 mb-3 flex items-center gap-1">
@@ -417,7 +434,10 @@ const counters = computed(() => [
           <div class="bg-gray-50 dark:bg-gray-800/50 rounded-2xl p-4 space-y-2">
             <div class="flex justify-between items-start gap-3">
               <p class="font-semibold text-gray-800 dark:text-white">{{ current?.title }}</p>
-              <StatusBadge :status="current?.status ?? 'open'" class="shrink-0" />
+              <div class="flex gap-2 shrink-0">
+                <CategoryBadge :category="current?.category" />
+                <StatusBadge :status="current?.status ?? 'open'" />
+              </div>
             </div>
             <p class="text-sm text-gray-500 dark:text-gray-400">{{ current?.description }}</p>
             <div class="flex flex-wrap gap-x-4 gap-y-1.5 pt-1 items-center">
@@ -461,11 +481,18 @@ const counters = computed(() => [
               </div>
             </div>
             <div>
+              <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Tipo de Soporte</label>
+              <select v-model="form.category" class="w-full px-3 py-2.5 border border-gray-200 dark:border-gray-700 rounded-xl text-sm bg-white dark:bg-gray-800 dark:text-white focus:ring-2 focus:ring-primary-400 focus:border-transparent outline-none">
+                <option v-for="opt in categoryOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+              </select>
+            </div>
+            <div>
               <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Asignar a</label>
               <select v-model="form.assigned_to" class="w-full px-3 py-2.5 border border-gray-200 dark:border-gray-700 rounded-xl text-sm bg-white dark:bg-gray-800 dark:text-white focus:ring-2 focus:ring-primary-400 focus:border-transparent outline-none">
                 <option :value="null">— Sin asignar —</option>
-                <option v-for="u in users" :key="u.id" :value="u.id">{{ u.name }} ({{ u.email }})</option>
+                <option v-for="u in assignableUsers" :key="u.id" :value="u.id">{{ u.name }} ({{ u.email }})</option>
               </select>
+              <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Solo se muestran usuarios del área Service Desk IT.</p>
             </div>
             <div>
               <label class="flex items-center gap-1.5 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">

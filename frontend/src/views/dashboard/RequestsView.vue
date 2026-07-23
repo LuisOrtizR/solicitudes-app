@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
 import { requestApi } from "@/api/endpoints/request.api";
-import type { Request, RequestStatus, RequestPriority } from "@/types/request.types";
+import type { Request, RequestStatus, RequestPriority, RequestCategory } from "@/types/request.types";
 import { useAuthStore } from "@/stores/auth.store";
 import StatusBadge from "@/components/ui/StatusBadge.vue";
 import PriorityBadge from "@/components/ui/PriorityBadge.vue";
+import CategoryBadge from "@/components/ui/CategoryBadge.vue";
 import BaseButton from "@/components/ui/BaseButton.vue";
 import Pagination from "@/components/ui/Pagination.vue";
 import TableSkeleton from "@/components/ui/TableSkeleton.vue";
@@ -33,16 +34,26 @@ const loadingHistory = ref(false);
 const deleteReason = ref("");
 const deleteError = ref("");
 
+const categoryOptions: { value: RequestCategory; label: string }[] = [
+  { value: "soporte_tecnico", label: "Soporte Técnico" },
+  { value: "accesos_permisos", label: "Accesos y Permisos" },
+  { value: "hardware", label: "Hardware" },
+  { value: "software", label: "Software" },
+  { value: "otro", label: "Otro" },
+];
+
 const createForm = ref({
   title: "",
   description: "",
   priority: "medium" as RequestPriority,
+  category: "otro" as RequestCategory,
 });
 
 const editForm = ref({
   title: "",
   description: "",
   priority: "medium" as RequestPriority,
+  category: "otro" as RequestCategory,
 });
 
 const isAdmin = computed(() => authStore.isAdmin);
@@ -83,7 +94,7 @@ const createRequest = async () => {
   try {
     await requestApi.create(createForm.value);
     showCreateModal.value = false;
-    createForm.value = { title: "", description: "", priority: "medium" };
+    createForm.value = { title: "", description: "", priority: "medium", category: "otro" };
     refetch();
   } catch (err: any) {
     alert(err.response?.data?.message || "Error creando solicitud");
@@ -93,7 +104,7 @@ const createRequest = async () => {
 const openEditModal = (r: Request) => {
   if (!canEdit(r)) return;
   editingRequest.value = r;
-  editForm.value = { title: r.title, description: r.description, priority: r.priority };
+  editForm.value = { title: r.title, description: r.description, priority: r.priority, category: r.category };
   showEditModal.value = true;
 };
 
@@ -103,6 +114,7 @@ const updateRequest = async () => {
     await requestApi.update(editingRequest.value.id, {
       title: editForm.value.title,
       description: editForm.value.description,
+      category: editForm.value.category,
     });
     showEditModal.value = false;
     refetch();
@@ -222,6 +234,7 @@ onMounted(refetch);
             <colgroup>
               <col class="w-auto"/>
               <col class="w-28"/>
+              <col class="w-36"/>
               <col class="w-32"/>
               <col class="w-40"/>
               <col class="w-28"/>
@@ -231,6 +244,7 @@ onMounted(refetch);
               <tr class="border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
                 <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase">Solicitud</th>
                 <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase">Prioridad</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase">Tipo de Soporte</th>
                 <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase">Estado</th>
                 <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase">Usuario</th>
                 <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase">Fecha</th>
@@ -245,6 +259,9 @@ onMounted(refetch);
                 </td>
                 <td class="px-4 py-3">
                   <PriorityBadge :priority="r.priority" />
+                </td>
+                <td class="px-4 py-3">
+                  <CategoryBadge :category="r.category" />
                 </td>
                 <td class="px-4 py-3">
                   <StatusBadge :status="r.status" />
@@ -281,7 +298,7 @@ onMounted(refetch);
                 </td>
               </tr>
               <tr v-if="requests.length === 0">
-                <td colspan="6" class="px-4 py-12 text-center text-gray-400 dark:text-gray-500">
+                <td colspan="7" class="px-4 py-12 text-center text-gray-400 dark:text-gray-500">
                   <InboxIcon class="w-8 h-8 mx-auto mb-2 text-gray-300 dark:text-gray-600" />
                   {{ search || filters.status ? "No hay solicitudes con estos filtros." : "No hay solicitudes registradas." }}
                 </td>
@@ -301,8 +318,9 @@ onMounted(refetch);
           </div>
           <StatusBadge :status="r.status" class="shrink-0" />
         </div>
-        <div class="flex items-center gap-2 mb-3">
+        <div class="flex items-center gap-2 mb-3 flex-wrap">
           <PriorityBadge :priority="r.priority" />
+          <CategoryBadge :category="r.category" />
           <span class="text-xs text-gray-400 dark:text-gray-500">{{ r.email }}</span>
         </div>
         <div class="flex gap-2">
@@ -332,11 +350,14 @@ onMounted(refetch);
         <h2 class="text-lg font-bold mb-4 text-gray-900 dark:text-white">Nueva Solicitud</h2>
         <input v-model="createForm.title" class="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500 rounded-xl mb-3" placeholder="Título"/>
         <textarea v-model="createForm.description" rows="4" class="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500 rounded-xl mb-3" placeholder="Descripción"/>
-        <select v-model="createForm.priority" class="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-white rounded-xl mb-4">
+        <select v-model="createForm.priority" class="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-white rounded-xl mb-3">
           <option value="low">Baja</option>
           <option value="medium">Media</option>
           <option value="high">Alta</option>
           <option value="urgent">Urgente</option>
+        </select>
+        <select v-model="createForm.category" class="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-white rounded-xl mb-4">
+          <option v-for="opt in categoryOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
         </select>
         <div class="flex gap-3">
           <BaseButton variant="primary" class="flex-1 !py-2.5" @click="createRequest">Crear</BaseButton>
@@ -350,7 +371,10 @@ onMounted(refetch);
         <h2 class="text-lg font-bold mb-1 text-gray-900 dark:text-white">Editar Solicitud</h2>
         <p class="text-xs text-amber-600 dark:text-amber-400 mb-4">⚠️ Solo puedes editar mientras la solicitud esté Abierta</p>
         <input v-model="editForm.title" class="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500 rounded-xl mb-3" placeholder="Título"/>
-        <textarea v-model="editForm.description" rows="4" class="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500 rounded-xl mb-4" placeholder="Descripción"/>
+        <textarea v-model="editForm.description" rows="4" class="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500 rounded-xl mb-3" placeholder="Descripción"/>
+        <select v-model="editForm.category" class="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-white rounded-xl mb-4">
+          <option v-for="opt in categoryOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+        </select>
         <div class="flex gap-3">
           <BaseButton variant="primary" class="flex-1 !py-2.5" @click="updateRequest">Guardar</BaseButton>
           <BaseButton variant="secondary" class="flex-1 !py-2.5" @click="showEditModal = false">Cancelar</BaseButton>
@@ -405,9 +429,10 @@ onMounted(refetch);
             <p class="text-gray-500 dark:text-gray-400">Descripción</p>
             <p class="text-gray-800 dark:text-gray-200">{{ detailRequest?.description }}</p>
           </div>
-          <div class="flex gap-3">
+          <div class="flex gap-3 flex-wrap">
             <StatusBadge :status="detailRequest?.status ?? 'open'" />
             <PriorityBadge :priority="detailRequest?.priority ?? 'medium'" />
+            <CategoryBadge :category="detailRequest?.category" />
           </div>
           <div>
             <p class="text-gray-500 dark:text-gray-400">Creado por</p>

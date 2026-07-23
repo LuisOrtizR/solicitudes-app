@@ -5,6 +5,7 @@ import { useAuthStore } from "@/stores/auth.store";
 import type { Request } from "@/types/request.types";
 import StatusBadge from "@/components/ui/StatusBadge.vue";
 import PriorityBadge from "@/components/ui/PriorityBadge.vue";
+import CategoryBadge from "@/components/ui/CategoryBadge.vue";
 import BaseButton from "@/components/ui/BaseButton.vue";
 import Pagination from "@/components/ui/Pagination.vue";
 import TableSkeleton from "@/components/ui/TableSkeleton.vue";
@@ -128,7 +129,7 @@ onMounted(refetch);
       <button @click="refetch" class="ml-auto text-xs font-semibold underline hover:no-underline shrink-0">Reintentar</button>
     </div>
 
-    <TableSkeleton v-if="loading" :rows="6" :columns="6" />
+    <TableSkeleton v-if="loading" :rows="6" :columns="8" />
 
     <div v-else class="hidden md:block">
       <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden">
@@ -138,6 +139,7 @@ onMounted(refetch);
               <tr class="border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
                 <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase">Solicitud</th>
                 <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase">Prioridad</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase">Tipo</th>
                 <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase">Usuario</th>
                 <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase">Motivo</th>
                 <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase">Eliminada el</th>
@@ -153,6 +155,9 @@ onMounted(refetch);
                 </td>
                 <td class="px-4 py-3">
                   <PriorityBadge :priority="r.priority" />
+                </td>
+                <td class="px-4 py-3">
+                  <CategoryBadge :category="r.category" />
                 </td>
                 <td class="px-4 py-3 text-xs text-gray-500 dark:text-gray-400">{{ r.email }}</td>
                 <td class="px-4 py-3 max-w-xs">
@@ -184,7 +189,7 @@ onMounted(refetch);
                 </td>
               </tr>
               <tr v-if="requests.length === 0">
-                <td colspan="7" class="px-4 py-12 text-center text-gray-400 dark:text-gray-500">
+                <td colspan="8" class="px-4 py-12 text-center text-gray-400 dark:text-gray-500">
                   <CheckCircleIcon class="w-8 h-8 mx-auto mb-2 text-emerald-300 dark:text-emerald-700" />
                   {{ search || filters.status ? "No hay solicitudes con estos filtros." : "No hay solicitudes pendientes de purga." }}
                 </td>
@@ -217,8 +222,9 @@ onMounted(refetch);
             {{ daysUntilPurge(r.deleted_at!) === 0 ? 'Hoy' : `${daysUntilPurge(r.deleted_at!)} día(s)` }}
           </span>
         </div>
-        <div class="flex items-center gap-2 mb-2">
+        <div class="flex items-center gap-2 mb-2 flex-wrap">
           <PriorityBadge :priority="r.priority" />
+          <CategoryBadge :category="r.category" />
           <span class="text-xs text-gray-400 dark:text-gray-500">{{ r.email }}</span>
         </div>
         <div class="bg-red-50 dark:bg-red-950/40 rounded-xl px-3 py-2 mb-3">
@@ -272,6 +278,7 @@ onMounted(refetch);
           <div class="flex gap-2 flex-wrap">
             <StatusBadge v-if="detailRequest?.status" :status="detailRequest.status" />
             <PriorityBadge v-if="detailRequest?.priority" :priority="detailRequest.priority" />
+            <CategoryBadge :category="detailRequest?.category" />
           </div>
           <div>
             <p class="text-gray-500 dark:text-gray-400 text-xs mb-0.5">Usuario</p>
